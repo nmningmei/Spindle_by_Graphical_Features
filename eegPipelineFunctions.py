@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats, signal
 from scipy.spatial.distance import squareform, pdist
-from scipy.sparse.csgraph import connected_components
+from scipy.sparse.csgraph import connected_components,laplacian
 import os
 import networkx as nx
 
@@ -111,28 +111,93 @@ def thresholding(threshold, attribute):
     for ii,attr in enumerate(attribute):
         adjacency.append(np.array(attr > threshold,dtype=int))
     return adjacency
+def second_largest(numbers):
+    count = 0
+    m1 = m2 = float('-inf')
+    for x in numbers:
+        count += 1
+        if x > m2:
+            if x >= m1:
+                m1, m2 = x, m1            
+            else:
+                m2 = x
+    return m2 if count >= 2 else None
 def extractGraphFeatures(adjacency):
+    features = ['average_degree','clustering_coefficient','eccentricity','diameter','radius','path_length',
+                'central_point','number_edge','spectral_radius','second_spectral_radius',
+                'adjacency_trace','adjacency_energy','spectral_gap','lap_trace','lap_energy',
+                'lap_zero','lap_one','lap_two','lap_trace_normal']
+    results = {name:[] for name in features}
     for ii,a in enumerate(adjacency):
+        
         G = nx.from_numpy_matrix(a)
-        average_degree = nx.average_neighbor_degree(G)
-        average_degree = np.mean([v for v in average_degree.values()])
+        if nx.is_connected(G):
+            print('computing connected graphic features of epoch %d'%(ii+1))
+            average_degree = nx.average_neighbor_degree(G)
+            average_degree = np.mean([v for v in average_degree.values()])
+            
+            clustering_coefficient = nx.average_clustering(G)
+            
+            eccentricity = nx.eccentricity(G)
+            average_eccentricity = np.mean([v for v in eccentricity.values()])
+            diameter = nx.diameter(G)
+            radius = nx.radius(G)
+            Path_length=[]
+            for j in range(6):
+                for k in range(6):
+                    if j != k:
+                        Path_length.append(nx.dijkstra_path_length(G,j,k))
+            average_path_length=np.mean(Path_length)
+            
+            connect_component_ratio = None
+            number_connect_components = None
+            average_component_size = None
+            isolated_point = None
+            end_point = None
+            central_point = (np.array([v for v in eccentricity.values()]) == radius).astype(int)
+            central_point = central_point.sum() / central_point.shape[0]
+            
+            number_edge = nx.number_of_edges(G)
+            
+            spectral_radius = max(np.linalg.eigvals(a))
+            second_spectral_radius = second_largest(np.linalg.eigvals(a))
+            adjacency_trace = np.linalg.eigvals(a).sum()
+            adjacency_energy = np.sum(np.linalg.eigvals(a)**2)
+            spectral_gap = spectral_radius- second_spectral_radius
+            
+            Laplacian_M_unnormal = laplacian(a,normed=False,)
+            laplacian_trace = np.linalg.eigvals(Laplacian_M_unnormal).sum()
+            laplacian_energy = np.sum(np.linalg.eigvals(Laplacian_M_unnormal)**2)
+            Laplacian_M_normal = laplacian(a,normed=True)
+            laplacian_zero = len(Laplacian_M_normal == 0)
+            laplacian_one  = len(Laplacian_M_normal == 1)
+            laplacian_two  = len(Laplacian_M_normal == 2)
+            laplacian_trace_normal = np.linalg.eigvals(Laplacian_M_normal).sum()
+            
+            results['average_degree'].append(average_degree)
+            results['clustering_coefficient'].append(clustering_coefficient)
+            results['eccentricity'].append(average_eccentricity)
+            results['diameter'].append(diameter)
+            results['radius'].append(radius)
+            results['path_length'].append(average_path_length)
+            results['central_point'].append(central_point)
+            results['number_edge'].append(number_edge)
+            results['spectral_radius'].append(spectral_radius)
+            results['second_spectral_radius'].append(second_spectral_radius)
+            results['adjacency_trace'].append(adjacency_trace)
+            results['adjacency_energy'].append(adjacency_energy)
+            results['spectral_gap'].append(spectral_gap)
+            results['lap_trace'].append(laplacian_trace)
+            results['lap_energy'].append(laplacian_energy)
+            results['lap_zero'].append(laplacian_zero)
+            results['lap_one'].append(laplacian_one)
+            results['lap_two'].append(laplacian_two)
+            results['lap_trace_normal'].append(laplacian_trace_normal)
+        else:
+            print('computing disconnected graphic features of epoch %d'%(ii+1))
+            for name in results.keys():
+                results[name].append(-99)
         
-        Clustering_coefficient = nx.average_clustering(G)
-        
-        eccentricity = nx.eccentricity(G)
-        average_eccentricity = np.mean([v for v in eccentricity.values()])
-        
-        diameter = nx.diameter(G)
-        
-        radius = nx.radius(G)
-        
-        Path_length=[]
-        for j in range(6):
-            for k in range(6):
-                if j != k:
-                    Path_length.append(nx.dijkstra_path_length(G,j,k))
-        average_path_length=np.mean(Path_length)
-        
-        connect_component_ratio = None
-        
+    results = pd.DataFrame(results)
+    return results
         

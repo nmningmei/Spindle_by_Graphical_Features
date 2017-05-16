@@ -18,8 +18,8 @@ import eegPipelineFunctions
 epochs = eegPipelineFunctions.get_data_ready(filename,channelList)
 epochFeature = eegPipelineFunctions.featureExtraction(epochs,)
 connectivity = eegPipelineFunctions.connectivity(epochs)
-t = 0.7
+t = 0.8
 connectivity = np.array(connectivity)
 cc = connectivity[:,-1,:,:]
 adj = eegPipelineFunctions.thresholding(t,cc)
-G=nx.from_numpy_matrix(adj[0])
+graphFeature = eegPipelineFunctions.extractGraphFeatures(adj)
