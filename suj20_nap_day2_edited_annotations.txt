@@ -1,0 +1,121 @@
+Onset,Duration,Annotation
++0.96,,Marker:Markon:w
++30.7723382,,Marker:Markoff:w
++31.1864883,,Marker:Markon:w
++60.7812398,,Marker:Markoff:w
++61.1824477,,Marker:Markon:w
++90.7799456,,Marker:Markoff:w
++91.1682113,,Marker:Markon:w
++120.7799456,,Marker:Markoff:w
++121.1552691,,Marker:Markon:w
++150.794182,,Marker:Markoff:w
++151.1177368,,Marker:Markon:w
++180.7579439,,Marker:Markoff:w
++181.1332674,,Marker:Markon:w
++210.7682976,,Marker:Markoff:w
++211.1695056,,Marker:Markon:w
++240.7682976,,Marker:Markoff:w
++241.1177368,,Marker:Markon:w
++270.723,,Marker:Markoff:w
++271.183742,,Marker:Markon:w
++300.7812398,,Marker:Markoff:w
++301.1177368,,Marker:Markon:w
++330.781,,Marker:Markoff:w
++331.195,,Marker:Markon:w
++360.742,,Marker:Markoff:w
++361.169,,Marker:Markon:w
++390.7751242,,Marker: Markoff: 1
++391.1892743,,Marker: Markon: 1 
++420.775,,Marker: Markoff: 1
++421.189,,Marker: Markon: 1 
++450.775,,Marker: Markoff: 1
++451.189,,Marker: Markon: 1 
++480.775,,Marker: Markoff: 1
++481.189,,Marker: Markon: 1 
++510.775,,Marker: Markoff: 1
++511.189,,Marker: Markon: 1 
++540.775,,Marker: Markoff: 1
++541.189,,Marker: Markon: 1 
++570.775,,Marker: Markoff: 1
++571.189,,Marker: Markon: 1 
++600.775,,Marker: Markoff: 1
++601.189,,Marker: Markon: 1 
++630.775,,Marker: Markoff: 1
++631.189,,Marker: Markon: 1 
++660.775,,Marker: Markoff: 1
++661.189,,Marker: Markon: 1 
++690.775,,Marker: Markoff: 1
++691.189,,Marker: Markon: 1 
++720.775,,Marker: Markoff: 1
++721.189,,Marker: Markon: 1 
++750.775,,Marker: Markoff: 1
++751.189,,Marker: Markon: 1 
++780.775,,Marker: Markoff: 1
++781.189,,Marker: Markon: 1 
++810.775,,Marker: Markoff: 1
++811.189,,Marker: Markon: 1 
++840.775,,Marker: Markoff: 1
++841.189,,Marker: Markon: 1 
++870.775,,Marker: Markoff: 1
++871.189,,Marker: Markon: 1 
++900.775,,Marker: Markoff: 1
++901.189,,Marker: Markon: 1 
++930.775,,Marker: Markoff: 1
++931.189,,Marker: Markon: 1 
++960.775,,Marker: Markoff: 1
++961.189,,Marker: Markon: 1 
++990.775,,Marker: Markoff: 1
++991.189,,Marker: Markon: 1 
++1020.775,,Marker: Markoff: 1
++1021.189,,Marker: Markon: 1 
++1050.775,,Marker: Markoff: 1
++1051.189,,Marker: Markon: 1 
++1070.8119508,,spindle
++1080.775,,Marker: Markoff: 1
++1081.189,,Marker: Markon: 1 
++1110.775,,Marker: Markoff: 1
++1111.189,,Marker: Markon: 1 
++1140.775,,Marker: Markoff: 1
++1141.189,,Marker: Markon: 1 
++1170.775,,Marker: Markoff: 1
++1171.189,,Marker: Markon: 1 
++1200.775,,Marker: Markoff: 1
++1201.189,,Marker: Markon: 1 
++1230.775,,Marker: Markoff: 1
++1231.189,,Marker: Markon: 1 
++1260.775,,Marker: Markoff: 1
++1261.189,,Marker: Markon: 1 
++1290.775,,Marker: Markoff: 1
++1291.189,,Marker: Markon: 1 
++1320.775,,Marker: Markoff: 1
++1321.189,,Marker: Markon: 1 
++1350.775,,Marker: Markoff: 1
++1351.189,,Marker: Markon: 1 
++1380.775,,Marker: Markoff: 1
++1381.189,,Marker: Markon: 1 
++1410.775,,Marker: Markoff: 1
++1411.189,,Marker: Markon: 1 
++1440.775,,Marker: Markoff: 1
++1441.189,,Marker: Markon: 1 
++1470.775,,Marker: Markoff: 1
++1471.189,,Marker: Markon: 1 
++1500.775,,Marker: Markoff: 1
++1501.189,,Marker: Markon: 1 
++1530.775,,Marker: Markoff: 1
++1531.189,,Marker: Markon: 1 
++1560.775,,Marker: Markoff: 1
++1561.189,,Marker: Markon: 1 
++1590.775,,Marker: Markoff: 1
++1591.189,,Marker: Markon: 1 
++1620.775,,Marker: Markoff: 1
++1621.189,,Marker: Markon: 1 
++1650.775,,Marker: Markoff: 1
++1651.189,,Marker: Markon: 1 
++1680.775,,Marker: Markoff: 1
++1681.189,,Marker: Markon: 1 
++1710.775,,Marker: Markoff: 1
++1711.189,,Marker: Markon: 1 
++1740.775,,Marker: Markoff: 1
++1741.189,,Marker: Markon: 1 
++1770.775,,Marker: Markoff: 1
++1771.189,,Marker: Markon: 1 

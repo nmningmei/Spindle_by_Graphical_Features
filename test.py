@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import os
 import networkx as nx
-os.chdir('D:\\NING - spindle\\graphical model')
+os.chdir('D:\\NING - spindle\\Spindle_by_Graphical_Features')
 filename = 'D:\\NING - spindle\\training set\\suj11_l2nap_day2.fif'
 channelList = ['F3','F4','C3','C4','O1','O2']
 import eegPipelineFunctions

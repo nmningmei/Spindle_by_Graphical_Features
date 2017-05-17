@@ -1,0 +1,130 @@
+Onset,Duration,Annotation
++0.529,,Marker:Markon:w
++30.3672226,,Marker:Markoff:w
++30.6778352,,Marker:Markon:w
++60.3685168,,Marker:Markoff:w
++60.7050138,,Marker:Markon:w
++90.369811,,Marker:Markoff:w
++90.6933658,,Marker:Markon:w
++120.3840474,,Marker:Markoff:w
++120.7076022,,Marker:Markon:w
++150.3426324,,Marker:Markoff:w
++150.6920716,,Marker:Markon:w
++180.381459,,Marker:Markoff:w
++180.7308981,,Marker:Markon:w
++210.3568688,,Marker:Markoff:w
++210.7192502,,Marker:Markon:w
++240.3767144,,Marker:Markoff:w
++240.7261535,,Marker:Markon:w
++270.339182,,Marker:Markoff:w
++270.6886212,,Marker:Markon:w
++300.3793028,,Marker:Markoff:w
++300.7028576,,Marker:Markon:w
++330.378,,Marker:Markoff:w
++330.673,,Marker:Markon:w
++360.362,,Marker:Markoff:w
++360.698,,Marker:Markon:w
++390.383,,Marker:Markoff:w
++390.797,,Marker:Markon:w
++420.4253364,,Marker:Markoff: w
++420.6228088,,Marker:Markon: w
++450.425,,Marker:Markoff: w
++450.622,,Marker:Markon: w
++480.425,,Marker:Markoff: w
++480.622,,Marker:Markon: w
++540.425,,Marker:Markoff: 1
++540.622,,Marker:Markon: 1
++570.425,,Marker:Markoff: 1
++570.622,,Marker:Markon: 1
++600.425,,Marker:Markoff: 1
++600.622,,Marker:Markon: 1
++630.425,,Marker:Markoff: 1
++630.622,,Marker:Markon: 1
++660.425,,Marker:Markoff: 1
++660.622,,Marker:Markon: 1
++690.425,,Marker:Markoff: 1
++690.622,,Marker:Markon: 1
++720.425,,Marker:Markoff: 1
++720.622,,Marker:Markon: 1
++750.425,,Marker:Markoff: 1
++750.622,,Marker:Markon: 1
++780.425,,Marker:Markoff: 1
++780.622,,Marker:Markon: 1
++810.425,,Marker:Markoff: 1
++810.622,,Marker:Markon: 1
++840.425,,Marker:Markoff: 1
++840.622,,Marker:Markon: 1
++870.425,,Marker:Markoff: 1
++870.622,,Marker:Markon: 1
++900.425,,Marker:Markoff: 1
++900.622,,Marker:Markon: 1
++930.425,,Marker:Markoff: 1
++930.622,,Marker:Markon: 1
++960.425,,Marker:Markoff: 1
++960.622,,Marker:Markon: 1
++990.425,,Marker:Markoff: 1
++990.622,,Marker:Markon: 1
++1020.425,,Marker:Markoff: 1
++1020.622,,Marker:Markon: 1
++1050.4324265,,Marker:Markoff: w
++1050.622,,Marker:Markon: w
++1080.432,,Marker:Markoff: w
++1080.622,,Marker:Markon: w
++1110.432,,Marker:Markoff: w
++1110.622,,Marker:Markon: w
++1140.432,,Marker:Markoff: 1
++1140.622,,Marker:Markon: 1
++1170.432,,Marker:Markoff: 1
++1170.622,,Marker:Markon: 1
++1200.432,,Marker:Markoff: 1
++1200.622,,Marker:Markon: 1
++1230.432,,Marker:Markoff: 1
++1230.622,,Marker:Markon: 1
++1260.432,,Marker:Markoff: 1
++1260.622,,Marker:Markon: 1
++1290.432,,Marker:Markoff: 1
++1290.622,,Marker:Markon: 1
++1320.432,,Marker:Markoff: 1
++1320.622,,Marker:Markon: 1
++1350.432,,Marker:Markoff: 1
++1350.622,,Marker:Markon: 1
++1380.432,,Marker:Markoff: 1
++1380.622,,Marker:Markon: 1
++1410.432,,Marker:Markoff: 1
++1410.622,,Marker:Markon: 1
++1440.432,,Marker:Markoff: 1
++1440.622,,Marker:Markon: 1
++1459.6628609,,spindle
++1462.5104123,,spindle
++1470.432,,Marker:Markoff: 1
++1470.622,,Marker:Markon: 1
++1491.1715497,,spindle
++1500.432,,Marker:Markoff: 1
++1500.622,,Marker:Markon: 1
++1519.2142037,,spindle
++1530.432,,Marker:Markoff: 1
++1530.622,,Marker:Markon: 1
++1560.432,,Marker:Markoff: 1
++1560.622,,Marker:Markon: 1
++1579.1360047,,spindle
++1590.432,,Marker:Markoff: 1
++1590.622,,Marker:Markon: 1
++1608.3089905,,spindle
++1620.432,,Marker:Markoff: 1
++1620.622,,Marker:Markon: 1
++1628.4582796,,spindle
++1649.1004597,,spindle
++1650.432,,Marker:Markoff: 1
++1650.622,,Marker:Markon: 1
++1670.3563838,,spindle
++1680.432,,Marker:Markoff: 1
++1680.622,,Marker:Markon: 1
++1710.432,,Marker:Markoff: 1
++1710.622,,Marker:Markon: 1
++1716.3279478,,spindle
++1740.432,,Marker:Markoff: 1
++1740.622,,Marker:Markon: 1
++1748.4819763,,spindle
++1770.432,,Marker:Markoff: 1
++1770.622,,Marker:Markon: 1
++1771.481,,spindle

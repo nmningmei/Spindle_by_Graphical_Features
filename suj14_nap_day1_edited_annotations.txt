@@ -1,0 +1,133 @@
+Onset,Duration,Annotation
++0.000003,,Marker: Markon:w
++29.7815195,,Marker: Markoff:w
++30.255003,,Marker: Markon:w
++59.852093,,Marker: Markoff:w
++60.2075432,,Marker: Markon:w
++89.781003,,Marker: Markoff:w
++90.255003,,Marker: Markon:w
++119.852003,,Marker: Markoff:w
++120.207003,,Marker: Markon:w
++149.781003,,Marker: Markoff:w
++150.255003,,Marker: Markon:w
++179.852003,,Marker: Markoff:w
++180.207003,,Marker: Markon:w
++209.781003,,Marker: Markoff:w
++210.255003,,Marker: Markon:w
++239.852003,,Marker: Markoff:w
++240.207003,,Marker: Markon:w
++269.781003,,Marker: Markoff:w
++270.255003,,Marker: Markon:w
++299.852003,,Marker: Markoff:w
++300.207003,,Marker: Markon:w
++329.781003,,Marker: Markoff:w
++330.255003,,Marker: Markon:w
++359.852003,,Marker: Markoff:w
++360.207003,,Marker: Markon:w
++360.207003,,Marker: Markon:w
++389.781003,,Marker: Markoff:w
++390.255003,,Marker: Markon:w
++419.852003,,Marker: Markoff:w
++420.207003,,Marker: Markon:w
++449.781003,,Marker: Markoff:w
++450.255003,,Marker: Markon:w
++479.852003,,Marker: Markoff:w
++480.1895764,,Marker: Markon:1
++509.7772541,,Marker: Markoff:1
++510.189003,,Marker: Markon:1
++539.8009508,,Marker: Markoff:1
++540.1800977,,Marker: Markon:w
++569.7772541,,Marker: Markoff:w
++570.1564011,,Marker: Markon:w
++599.7485669,,Marker: Markoff:w
++600.2225006,,Marker: Markon:1
++629.789418,,Marker: Markoff:1
++630.222003,,Marker: Markon:1
++659.748003,,Marker: Markoff:1
++660.207003,,Marker: Markon:1
++689.748003,,Marker: Markoff:1
++719.748003,,Marker: Markoff:1
++720.207003,,Marker: Markon:1
++749.748003,,Marker: Markoff:1
++750.207003,,Marker: Markon:1
++779.748003,,Marker: Markoff:1
++780.207003,,Marker: Markon:1
++809.748003,,Marker: Markoff:1
++810.207003,,Marker: Markon:1
++839.748003,,Marker: Markoff:1
++840.207003,,Marker: Markon:1
++869.748003,,Marker: Markoff:1
++899.748003,,Marker: Markoff:1
++900.207003,,Marker: Markon:1
++900.207003,,Marker: Markon:1
++929.748003,,Marker: Markoff:1
++930.207003,,Marker: Markon:1
++959.748003,,Marker: Markoff:1
++960.207003,,Marker: Markon:1
++989.748003,,Marker: Markoff:1
++990.207003,,Marker: Markon:1
++1019.748003,,Marker: Markoff:1
++1020.207003,,Marker: Markon:1
++1049.748003,,Marker: Markoff:1
++1050.207003,,Marker: Markon:1
++1072.7626544,,spindle
++1079.748003,,Marker: Markoff:1
++1080.207003,,Marker: Markon:2
++1098.3692118,,spindle
++1109.748003,,Marker: Markoff:2
++1110.1466061,,spindle
++1110.207003,,Marker: Markon:2
++1139.748003,,Marker: Markoff:2
++1140.207003,,Marker: Markon:2
++1169.748003,,Marker: Markoff:2
++1170.207003,,Marker: Markon:2
++1183.6617053,,spindle
++1199.748003,,Marker: Markoff:2
++1200.207003,,Marker: Markon:2
++1204.8023438,,k-complex
++1229.748003,,Marker: Markoff:2
++1230.207003,,Marker: Markon:2
++1259.748003,,Marker: Markoff:2
++1260.207003,,Marker: Markon:1
++1260.3191686,,spindle
++1289.7945784,,Marker:Markoff:1
++1290.207003,,Marker: Markon:1
++1319.794003,,Marker:Markoff:1
++1320.207003,,Marker: Markon:1
++1333.1302126,,spindle
++1349.794003,,Marker:Markoff:1
++1350.207003,,Marker: Markon:1
++1379.794003,,Marker:Markoff:1
++1380.207003,,Marker: Markon:1
++1409.794003,,Marker:Markoff:1
++1410.207003,,Marker: Markon:1
++1439.794003,,Marker:Markoff:1
++1440.561003,,Marker:Markon:1
++1451.9912998,,spindle
++1453.561619,,spindle
++1469.794003,,Marker:Markoff:1
++1470.561003,,Marker:Markon:1
++1499.794003,,Marker:Markoff:1
++1500.561003,,Marker:Markon:1
++1529.794003,,Marker:Markoff:1
++1530.561003,,Marker:Markon:1
++1542.4488373,,spindle
++1559.794003,,Marker:Markoff:1
++1560.561003,,Marker:Markon:1
++1583.6395189,,spindle
++1589.794003,,Marker:Markoff:1
++1590.561003,,Marker:Markon:1
++1619.794003,,Marker:Markoff:1
++1620.561003,,Marker:Markon:1
++1649.794003,,Marker:Markoff:1
++1650.561003,,Marker:Markon:1
++1672.8629874,,spindle
++1679.794003,,Marker:Markoff:1
++1680.561003,,Marker:Markon:1
++1701.6395189,,spindle
++1709.794003,,Marker:Markoff:1
++1710.561003,,Marker:Markon:1
++1739.794003,,Marker:Markoff:1
++1769.794003,,Marker:Markoff:1
++1770.561003,,Marker:Markon:1
++1787.0683369,,spindle
