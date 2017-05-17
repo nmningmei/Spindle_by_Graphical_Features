@@ -15,9 +15,7 @@ channelList = ['F3','F4','C3','C4','O1','O2']
 import eegPipelineFunctions
 
 raw_dir = 'D:\\NING - spindle\\training set\\'
-
-
-
+# get EEG files that have corresponding annotations
 raw_files = []
 for file in [f for f in os.listdir() if ('txt' in f)]:
     sub = int(file.split('_')[0][3:])
@@ -31,16 +29,16 @@ for file in [f for f in os.listdir() if ('txt' in f)]:
     if len(raw_file) != 0:
         raw_files.append([raw_dir + raw_file[0],raw_dir + file])
         
-
+# directory for storing all the feature files
 raw_dir = 'D:\\NING - spindle\\training set\\road_trip\\'
 if not os.path.exists(raw_dir):
     os.makedirs(raw_dir)
-    
+# initialize the range of the parameters we want to compute based on
 epoch_lengths  = np.arange(1.5,5.5,0.5) # 1.5 to 5 seconds with 0.5 stepsize
 plv_thresholds = np.arange(0.6, 0.85, 0.05) # 0.6 to 0.8 with .05
 pli_thresholds = np.arange(0.05,0.30, 0.05) # 0.05 to 0.25 with 0.05
 cc_thresholds  = np.arange(0.7, 0.95,0.05) # 0.7 to 0.9 with 0.05
-
+# make sub-directories based on epoch length
 first_level_directory = []
 for epoch_length in epoch_lengths:
     directory_1 = raw_dir + 'epoch_length '+str(epoch_length)+'\\'
@@ -48,7 +46,7 @@ for epoch_length in epoch_lengths:
         os.makedirs(directory_1)
     first_level_directory.append(directory_1)   
 
-
+# getting features and save them as csv files
 for d1 in first_level_directory:
     os.chdir(d1)
     #print(os.getcwd())
@@ -67,20 +65,27 @@ for d1 in first_level_directory:
             #print(directory_2)
             os.makedirs(directory_2)
         os.chdir(directory_2)
+        # epoch the data 
         epochs = eegPipelineFunctions.get_data_ready(raw_file,channelList)
+        # extract signal features
         epochFeature = eegPipelineFunctions.featureExtraction(epochs,)
         epochFeature = pd.DataFrame(epochFeature)
         epochFeature.to_csv('sub'+str(sub)+'day'+day+'epoch_features.csv',index=False)
+        # compute adjasency matrices based on epochs
         connectivity = eegPipelineFunctions.connectivity(epochs)
         connectivity = np.array(connectivity)
         plv, pli, cc = connectivity[:,0,:,:],connectivity[:,1,:,:],connectivity[:,2,:,:]
+        # extract graph features
         for t_plv,t_pli,t_cc in zip(plv_thresholds,pli_thresholds,cc_thresholds):
+            # convert adjasency matrices to binary adjasency matrices
             adj_plv = eegPipelineFunctions.thresholding(t_plv,plv)
             adj_pli = eegPipelineFunctions.thresholding(t_pli,pli)
             adj_cc  = eegPipelineFunctions.thresholding(t_cc, cc )
+            # this is how we extract graph features
             graphFeature_plv = eegPipelineFunctions.extractGraphFeatures(adj_plv)
             graphFeature_pli = eegPipelineFunctions.extractGraphFeatures(adj_pli)
             graphFeature_cc  = eegPipelineFunctions.extractGraphFeatures(adj_cc )
+            # prepare the sub-directories for storing feature files
             plv_dir = directory_2 + 'plv_' + str(t_plv) + '\\'
             pli_dir = directory_2 + 'pli_' + str(t_pli) + '\\'
             cc_dir  = directory_2 + 'cc_'  + str(t_cc ) + '\\'
@@ -90,6 +95,7 @@ for d1 in first_level_directory:
                 os.makedirs(pli_dir)
             if not os.path.exists(cc_dir):
                 os.makedirs(cc_dir)
+            # saving csvs
             pd.concat([epochFeature,graphFeature_plv],axis=1).to_csv(plv_dir + 'plv_' + str(t_plv) + '.csv',index=False)
             pd.concat([epochFeature,graphFeature_pli],axis=1).to_csv(plv_dir + 'pli_' + str(t_pli) + '.csv',index=False)
             pd.concat([epochFeature,graphFeature_cc ],axis=1).to_csv(cc_dir  + 'cc_'  + str(t_cc ) + '.csv',index=False)
