@@ -17,7 +17,7 @@ import eegPipelineFunctions
 raw_dir = 'D:\\NING - spindle\\training set\\'
 # get EEG files that have corresponding annotations
 raw_files = []
-for file in [f for f in os.listdir() if ('txt' in f)]:
+for file in [f for f in os.listdir(raw_dir) if ('txt' in f)]:
     sub = int(file.split('_')[0][3:])
     if sub < 11:
         day = file.split('_')[1][1]
@@ -75,6 +75,13 @@ for d1 in first_level_directory:
         connectivity = eegPipelineFunctions.connectivity(epochs)
         connectivity = np.array(connectivity)
         plv, pli, cc = connectivity[:,0,:,:],connectivity[:,1,:,:],connectivity[:,2,:,:]
+        # pre-thresholding graph features
+        plv_pre_threshold = eegPipelineFunctions.extractGraphFeatures(plv)
+        pli_pre_threshold = eegPipelineFunctions.extractGraphFeatures(pli)
+        cc_pre_threshold  = eegPipelineFunctions.extractGraphFeatures(cc )
+        plv_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'plv_features.csv',index=False)
+        pli_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'pli_features.csv',index=False)
+        cc_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'cc_features.csv',index=False)
         # extract graph features
         for t_plv,t_pli,t_cc in zip(plv_thresholds,pli_thresholds,cc_thresholds):
             # convert adjasency matrices to binary adjasency matrices
