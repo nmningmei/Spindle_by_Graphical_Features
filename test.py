@@ -21,5 +21,6 @@ connectivity = eegPipelineFunctions.connectivity(epochs)
 t = 0.8
 connectivity = np.array(connectivity)
 cc = connectivity[:,-1,:,:]
+temp = eegPipelineFunctions.extractGraphFeatures(cc)
 adj = eegPipelineFunctions.thresholding(t,cc)
 graphFeature = eegPipelineFunctions.extractGraphFeatures(adj)
