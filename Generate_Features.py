@@ -66,10 +66,13 @@ for d1 in first_level_directory:
             os.makedirs(directory_2)
         os.chdir(directory_2)
         # epoch the data 
-        epochs = eegPipelineFunctions.get_data_ready(raw_file,channelList)
+        epochs,label,_ = eegPipelineFunctions.get_data_ready(raw_file,channelList,
+                                                             annotation_file,
+                                                             epoch_length=epoch_length)
         # extract signal features
         epochFeature = eegPipelineFunctions.featureExtraction(epochs,)
         epochFeature = pd.DataFrame(epochFeature)
+        epochFeature['label']=label
         epochFeature.to_csv('sub'+str(sub)+'day'+day+'epoch_features.csv',index=False)
         # compute adjasency matrices based on epochs
         connectivity = eegPipelineFunctions.connectivity(epochs)
@@ -77,11 +80,16 @@ for d1 in first_level_directory:
         plv, pli, cc = connectivity[:,0,:,:],connectivity[:,1,:,:],connectivity[:,2,:,:]
         # pre-thresholding graph features
         plv_pre_threshold = eegPipelineFunctions.extractGraphFeatures(plv)
+        plv_pre_threshold['label']=label
         pli_pre_threshold = eegPipelineFunctions.extractGraphFeatures(pli)
+        pli_pre_threshold['label']=label
         cc_pre_threshold  = eegPipelineFunctions.extractGraphFeatures(cc )
+        cc_pre_threshold['label']=label
         plv_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'plv_features.csv',index=False)
         pli_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'pli_features.csv',index=False)
         cc_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'cc_features.csv',index=False)
+        print('done plv, pli, and cc')
+        print('start thresholding')
         # extract graph features
         for t_plv,t_pli,t_cc in zip(plv_thresholds,pli_thresholds,cc_thresholds):
             # convert adjasency matrices to binary adjasency matrices
@@ -104,28 +112,6 @@ for d1 in first_level_directory:
                 os.makedirs(cc_dir)
             # saving csvs
             pd.concat([epochFeature,graphFeature_plv],axis=1).to_csv(plv_dir + 'plv_' + str(t_plv) + '.csv',index=False)
-            pd.concat([epochFeature,graphFeature_pli],axis=1).to_csv(plv_dir + 'pli_' + str(t_pli) + '.csv',index=False)
+            pd.concat([epochFeature,graphFeature_pli],axis=1).to_csv(pli_dir + 'pli_' + str(t_pli) + '.csv',index=False)
             pd.concat([epochFeature,graphFeature_cc ],axis=1).to_csv(cc_dir  + 'cc_'  + str(t_cc ) + '.csv',index=False)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+ 

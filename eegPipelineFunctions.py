@@ -23,8 +23,13 @@ def phase_lag_index(data1, data2):
     PLI[PLI>-np.pi] -= 2*np.pi
     return PLI
 
-
-def get_data_ready(filename,channelList,l_freq=11,h_freq=16,epoch_length=5,overalapping=0.2,
+def spindle_check(x):
+    import re
+    if re.compile('spindle',re.IGNORECASE).search(x):
+        return True
+    else:
+        return False
+def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoch_length=5,overalapping=0.2,
                    ):
     raw = mne.io.read_raw_fif(filename,preload=True)
     raw.pick_channels(channelList)
@@ -33,7 +38,11 @@ def get_data_ready(filename,channelList,l_freq=11,h_freq=16,epoch_length=5,overa
     events = np.array([a,[epoch_length]*len(a),[int(1)]*len(a)],dtype=int).T
     epochs = mne.Epochs(raw,events,tmin=0,tmax=epoch_length,baseline=None,preload=True,proj=False)
     epochs.resample(500)
-    return epochs
+    
+    annotation = pd.read_csv(annotation_file)
+    spindles = annotation[annotation['Annotation'].apply(spindle_check)]
+    manual_label,temp = discritized_onset_label_manual(epochs,spindles,epoch_length,front=0,back=0)
+    return epochs,manual_label,temp
 
 def featureExtraction(epochs):
     features = ['mean','variance','delta_mean',
@@ -43,7 +52,7 @@ def featureExtraction(epochs):
     epochFeatures = {name:[] for name in features}
     for ii, epoch_data in enumerate(epochs):
         epoch_data  = epoch_data[:,:-1].T
-        print('computing features for epoch %d' %(ii+1))
+        #print('computing features for epoch %d' %(ii+1))
         epochFeatures['mean'].append(np.mean(epoch_data))
         epochFeatures['variance'].append(np.var(epoch_data))
         startRange = epoch_data[:-1,:]
@@ -88,7 +97,7 @@ def connectivity(epochs):
     connectivity=[]
     for ii, epoch_data in enumerate(epochs):
         epoch_data  = epoch_data[:,:-1].T
-        print('computing connectivity for epoch %d' %(ii+1))
+        #print('computing connectivity for epoch %d' %(ii+1))
         dist_list_plv = np.zeros(shape=(len(ch_names),len(ch_names)))
         dist_list_pli = np.zeros(shape=(len(ch_names),len(ch_names)))
         for node_1 in range(len(ch_names)):
@@ -132,7 +141,7 @@ def extractGraphFeatures(adjacency):
         
         G = nx.from_numpy_matrix(a)
         if nx.is_connected(G):
-            print('computing connected graphic features of epoch %d'%(ii+1))
+            #print('computing connected graphic features of epoch %d'%(ii+1))
             average_degree = nx.average_neighbor_degree(G)
             average_degree = np.mean([v for v in average_degree.values()])
             
@@ -194,10 +203,37 @@ def extractGraphFeatures(adjacency):
             results['lap_two'].append(laplacian_two)
             results['lap_trace_normal'].append(laplacian_trace_normal)
         else:
-            print('computing disconnected graphic features of epoch %d'%(ii+1))
+            #print('computing disconnected graphic features of epoch %d'%(ii+1))
             for name in results.keys():
                 results[name].append(-99)
         
     results = pd.DataFrame(results)
     return results
-        
+def intervalCheck(a,b,tol=0):#a is an array and b is a point
+    return a[0]-tol <= b <= a[1]+tol
+def spindle_comparison(time_interval,spindle,spindle_duration,spindle_duration_fix=True):
+    if spindle_duration_fix:
+        spindle_start = spindle - 0.5
+        spindle_end   = spindle + 1.5
+        a =  np.logical_or((intervalCheck(time_interval,spindle_start)),
+                           (intervalCheck(time_interval,spindle_end)))
+        return a
+    else:
+        spindle_start = spindle - spindle_duration/2.
+        spindle_end   = spindle + spindle_duration/2.
+        a = np.logical_or((intervalCheck(time_interval,spindle_start)),
+                           (intervalCheck(time_interval,spindle_end)))
+        return a        
+def discritized_onset_label_manual(epochs,df,spindle_segment,front=300,back=100):
+    start_times = epochs.events[:,0]
+    end_times = epochs.events[:,0] + epochs.events[:,1]
+    discritized_time_intervals = np.vstack((start_times,end_times)).T
+    discritized_time_to_zero_one_labels = np.zeros(len(discritized_time_intervals))
+    temp=[]
+    for jj,(time_interval_1,time_interval_2) in enumerate(discritized_time_intervals):
+        time_interval = [time_interval_1,time_interval_2]
+        for spindle in df['Onset']:
+            temp.append([time_interval,spindle])
+            if spindle_comparison(time_interval,spindle,spindle_segment):
+                discritized_time_to_zero_one_labels[jj] = 1
+    return discritized_time_to_zero_one_labels,temp
