@@ -44,11 +44,9 @@ for epoch_length in epoch_lengths:
     directory_1 = raw_dir + 'epoch_length '+str(epoch_length)+'\\'
     if not os.path.exists(directory_1):
         os.makedirs(directory_1)
+        
     first_level_directory.append(directory_1)   
-
-# getting features and save them as csv files
-for d1 in first_level_directory:
-    os.chdir(d1)
+    os.chdir(directory_1)
     #print(os.getcwd())
     for files in raw_files:
         raw_file, annotation_file = files
@@ -60,7 +58,7 @@ for d1 in first_level_directory:
         else:
             day = temp_anno.split('_')[2][-1]
             day_for_load = temp_anno.split('_')[2]
-        directory_2 = d1 + 'sub' + str(sub) + 'day' + day + '\\'
+        directory_2 = directory_1 + 'sub' + str(sub) + 'day' + day + '\\'
         if not os.path.exists(directory_2):
             #print(directory_2)
             os.makedirs(directory_2)
@@ -73,7 +71,7 @@ for d1 in first_level_directory:
         epochFeature = eegPipelineFunctions.featureExtraction(epochs,)
         epochFeature = pd.DataFrame(epochFeature)
         epochFeature['label']=label
-        epochFeature.to_csv('sub'+str(sub)+'day'+day+'epoch_features.csv',index=False)
+        epochFeature.to_csv('sub'+str(sub)+'day'+day+'_'+str(epoch_length)+'_'+'epoch_features.csv',index=False)
         # compute adjasency matrices based on epochs
         connectivity = eegPipelineFunctions.connectivity(epochs)
         connectivity = np.array(connectivity)
@@ -114,4 +112,6 @@ for d1 in first_level_directory:
             pd.concat([epochFeature,graphFeature_plv],axis=1).to_csv(plv_dir + 'plv_' + str(t_plv) + '.csv',index=False)
             pd.concat([epochFeature,graphFeature_pli],axis=1).to_csv(pli_dir + 'pli_' + str(t_pli) + '.csv',index=False)
             pd.concat([epochFeature,graphFeature_cc ],axis=1).to_csv(cc_dir  + 'cc_'  + str(t_cc ) + '.csv',index=False)
+
+
  
