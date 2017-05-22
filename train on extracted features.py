@@ -33,16 +33,15 @@ pli_thresholds = np.arange(0.05,0.30, 0.05) # 0.05 to 0.25 with 0.05
 cc_thresholds  = np.arange(0.7, 0.95,0.05) # 0.7 to 0.9 with 0.05
 # make sub-directories based on epoch length
 first_level_directory = []
+signal_feature_dict = {str(epoch_length):[] for epoch_length in epoch_lengths}
 for epoch_length in epoch_lengths:
     directory_1 = raw_dir + 'epoch_length '+str(epoch_length)+'\\'
     if not os.path.exists(directory_1):
         os.makedirs(directory_1)
     first_level_directory.append(directory_1)   
-
-# signal features only
-signal_feature = {str(epoch_length):[] for epoch_length in epoch_lengths}
-for d1 in first_level_directory:
-    os.chdir(d1)
+    df_cc,df_pli,df_plv,df_signal=[],[],[],[]
+    
+    os.chdir(directory_1)
     #print(os.getcwd())
     for files in raw_files:
         raw_file, annotation_file = files
@@ -54,10 +53,15 @@ for d1 in first_level_directory:
         else:
             day = temp_anno.split('_')[2][-1]
             day_for_load = temp_anno.split('_')[2]
-        directory_2 = d1 + 'sub' + str(sub) + 'day' + day + '\\'
+        directory_2 = directory_1 + 'sub' + str(sub) + 'day' + day + '\\'
         if not os.path.exists(directory_2):
             #print(directory_2)
             os.makedirs(directory_2)
         os.chdir(directory_2)
-        print(directory_2)
+        cc_feature, pli_feature, plv_feature, signal_feature=[pd.read_csv(f) for f in os.listdir(directory_2) if ('csv' in f)]
+        df_cc.append(cc_feature)
+        df_pli.append(pli_feature)
+        df_plv.append(plv_feature)
+        df_signal.append(signal_feature)
+    signal_feature_dict[str(epoch_length)] = pd.concat(df_signal)
         
