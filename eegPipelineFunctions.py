@@ -13,6 +13,11 @@ from scipy.spatial.distance import squareform, pdist
 from scipy.sparse.csgraph import connected_components,laplacian
 import os
 import networkx as nx
+from sklearn.model_selection import StratifiedKFold,KFold
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.metrics import roc_curve,precision_recall_curve,auc,average_precision_score
 
 def phase_locking_value(theta1, theta2):
     complex_phase_diff = np.exp(np.complex(0,1)*(theta1 - theta2))
@@ -246,3 +251,26 @@ def get_real_part(df):
             a = np.array([np.real(np.complex(value)) for value in df[name].values])
             temp[name] = a
     return pd.DataFrame(temp)
+def cross_validation_pipeline(dfs,cv=None):
+    data = dfs.values   
+    X, Y = data[:,:-1], data[:,-1]
+    if cv == None:
+        cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=np.random.randint(10000,20000))
+    else:
+        cv = KFold(n_splits=cv,shuffle=True,random_state=12334)
+    results = []
+    for train, test in cv.split(X,Y):
+        clf = Pipeline([('scaler',StandardScaler()),
+                        ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
+                                                          max_iter=int(1e5),
+                                                          tol=1e-4,
+                                                          cv=KFold(n_splits=10,shuffle=True,random_state=12345),
+                                                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
+                                                          scoring='roc_auc'))])
+        clf.fit(X[train],Y[train])
+        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
+        auc_score = auc(fpr,tpr)
+        precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
+        average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1],average='samples')
+        results.append([auc_score,precision,recall,average_scores])
+    return results
