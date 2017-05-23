@@ -266,9 +266,9 @@ def cross_validation_pipeline(dfs,cv=None):
                                                           tol=1e-4,
                                                           class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
         clf.fit(X[train],Y[train])
-        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
+        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
         auc_score = auc(fpr,tpr)
-        precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
-        average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1],average='micro')
+        precision,recall,_ = precision_recall_curve(Y[test],clf.decision_function(X[test]))
+        average_scores = average_precision_score(Y[test],clf.decision_function(X[test]))
         results.append([auc_score,precision,recall,average_scores])
     return results
