@@ -32,12 +32,16 @@ graph_only_result = pickle.load(open(file_dir+'graph_feature_only.p','rb'))
 
 
 fig, axes = plt.subplots(4,2,figsize=(8,16))
+for ax,(key,values) in zip(axes.flatten(),siganl_only_result.items()):
+    epoch_length = key
+    auc_score,fpr,tpr,precision,recall,average_scores =values[2]
+    ax.plot(fpr,tpr)
+    
+fig, axes = plt.subplots(4,2,figsize=(8,16))
 for ax,(key,values) in zip(axes.flatten(),graph_only_result.items()):
     epoch_length = key
     auc_score,fpr,tpr,precision,recall,average_scores =values[2]
-    ax.plot(recall,precision)
-    
-    
+    ax.plot(fpr,tpr)    
     
 
 

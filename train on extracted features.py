@@ -82,13 +82,14 @@ results = {}
 for key,dfs in graph_features_dict.items():
     data = dfs.values   
     X, Y = data[:,:-1], data[:,-1]
-    cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=np.random.randint(10000,20000))
+    cv = StratifiedKFold(n_splits=20,shuffle=True,random_state=np.random.randint(10000,20000))
     results[key] = []
     for train, test in cv.split(X,Y):
         clf = Pipeline([('scaler',StandardScaler()),
-                        ('estimator',LogisticRegression(C=1e2,
+                        ('estimator',LogisticRegression(C=1e-8,
                                                           max_iter=int(1e5),
                                                           tol=1e-4))])
+        #clf = LogisticRegression(C=1e-8,max_iter=int(1e5),tol=1e-4)
         clf.fit(X[train],Y[train])
         fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
         auc_score = auc(fpr,tpr)
