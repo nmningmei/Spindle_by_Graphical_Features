@@ -61,6 +61,8 @@ for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
             signal_features_dict[directory_1][sub_fold] = eegPipelineFunctions.cross_validation_pipeline(signal_features)
             graph_features_dict[directory_1][sub_fold] = eegPipelineFunctions.cross_validation_pipeline(df_combine)
             print(sub_fold,Counter(label),'enough samples??')
+            print('signal:%.2f +/-%.2f'%(np.mean([v for (v,_,_,_) in signal_features_dict[directory_1][sub_fold]]),np.std([v for (v,_,_,_) in signal_features_dict[directory_1][sub_fold]])))
+            print('graph:%.2f +/-%.2f'%(np.mean([v for (v,_,_,_) in graph_features_dict[directory_1][sub_fold]]),np.std([v for (v,_,_,_) in graph_features_dict[directory_1][sub_fold]])))
         except:
             try:
                 cv = KFold(n_splits=5,shuffle=True,random_state=0)
