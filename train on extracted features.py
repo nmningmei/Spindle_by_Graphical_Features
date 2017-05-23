@@ -12,7 +12,7 @@ from sklearn.model_selection import StratifiedKFold,KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegressionCV,LogisticRegression
-from sklearn.metrics import roc_curve,precision_recall_curve,auc,average_precision_score
+from sklearn.metrics import roc_curve,precision_recall_curve,auc,average_precision_score,confusion_matrix
 import pickle
 try:
     function_dir = 'D:\\NING - spindle\\Spindle_by_Graphical_Features'
@@ -67,14 +67,15 @@ for key,dfs in signal_features_dict.items():
                                                           max_iter=int(1e5),
                                                           tol=1e-4,
                                                           cv=KFold(n_splits=10,shuffle=True,random_state=12345),
-                                                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
+                                                          class_weight={1:1-np.count_nonzero(Y)/len(Y),0:(np.count_nonzero(Y)/len(Y))},
                                                           scoring='roc_auc'))])
         clf.fit(X[train],Y[train])
-        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
+        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
         auc_score = auc(fpr,tpr)
-        precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
-        average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1],average='samples')
-        results[key].append([auc_score,precision,recall,average_scores])
+        precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
+        average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1])
+        results[key].append([auc_score,fpr,tpr,precision,recall,average_scores])
+        print(key,auc_score,precision,recall,average_scores,'signal\n',confusion_matrix(Y[test],clf.predict(X[test])))
 pickle.dump(results,open(file_dir+'signal_feature_only.p','wb'))
 
 results = {}
@@ -85,15 +86,16 @@ for key,dfs in graph_features_dict.items():
     results[key] = []
     for train, test in cv.split(X,Y):
         clf = Pipeline([('scaler',StandardScaler()),
-                        ('estimator',LogisticRegression(C=1.0,
+                        ('estimator',LogisticRegression(C=1e2,
                                                           max_iter=int(1e5),
                                                           tol=1e-4))])
         clf.fit(X[train],Y[train])
-        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
+        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
         auc_score = auc(fpr,tpr)
-        precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
-        average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1],average='samples')
-        results[key].append([auc_score,precision,recall,average_scores])
+        precision,recall,_ = precision_recall_curve(Y[test],clf.decision_function(X[test]))
+        average_scores = average_precision_score(Y[test],clf.decision_function(X[test]))
+        results[key].append([auc_score,fpr,tpr,precision,recall,average_scores])
+        print(key,auc_score,precision,recall,average_scores,'graph\n',confusion_matrix(Y[test],clf.predict(X[test])))
 pickle.dump(results,open(file_dir+'graph_feature_only.p','wb'))         
     
 #siganl_only_result = pickle.load(open(file_dir+'signal_feature_only.p','rb'))
