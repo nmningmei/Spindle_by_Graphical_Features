@@ -237,3 +237,12 @@ def discritized_onset_label_manual(epochs,df,spindle_segment,front=300,back=100)
             if spindle_comparison(time_interval,spindle,spindle_segment):
                 discritized_time_to_zero_one_labels[jj] = 1
     return discritized_time_to_zero_one_labels,temp
+def get_real_part(df):
+    temp = {}
+    for name in df.columns:
+        try:
+            temp[name] = pd.to_numeric(df[name])
+        except:
+            a = np.array([np.real(np.complex(value)) for value in df[name].values])
+            temp[name] = a
+    return pd.DataFrame(temp)
