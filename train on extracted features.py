@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.model_selection import StratifiedKFold,KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.linear_model import LogisticRegressionCV,LogisticRegression
 from sklearn.metrics import roc_curve,precision_recall_curve,auc,average_precision_score
 import pickle
 try:
@@ -30,7 +30,7 @@ except:
 
 signal_features_dict = {}
 graph_features_dict = {}
-for directory_1 in os.listdir(file_dir):
+for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
     sub_dir = file_dir + directory_1 + '\\'
     epoch_length = directory_1[-3]
     os.chdir(sub_dir)
@@ -66,7 +66,7 @@ for key,dfs in signal_features_dict.items():
                         ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
                                                           max_iter=int(1e5),
                                                           tol=1e-4,
-                                                          cv=KFold(n_splits=10,shuffle=True,random_state=2017),
+                                                          cv=KFold(n_splits=10,shuffle=True,random_state=12345),
                                                           class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
                                                           scoring='roc_auc'))])
         clf.fit(X[train],Y[train])
@@ -75,7 +75,7 @@ for key,dfs in signal_features_dict.items():
         precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
         average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1],average='samples')
         results[key].append([auc_score,precision,recall,average_scores])
-pickle.dump(results,open('signal_feature_only.p','wb'))
+pickle.dump(results,open(file_dir+'signal_feature_only.p','wb'))
 
 results = {}
 for key,dfs in graph_features_dict.items():
@@ -85,19 +85,16 @@ for key,dfs in graph_features_dict.items():
     results[key] = []
     for train, test in cv.split(X,Y):
         clf = Pipeline([('scaler',StandardScaler()),
-                        ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
+                        ('estimator',LogisticRegression(C=1.0,
                                                           max_iter=int(1e5),
-                                                          tol=1e-4,
-                                                          cv=KFold(n_splits=10,shuffle=True,random_state=2017),
-                                                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
-                                                          scoring='roc_auc'))])
+                                                          tol=1e-4))])
         clf.fit(X[train],Y[train])
         fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
         auc_score = auc(fpr,tpr)
         precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1],pos_label=1)
         average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1],average='samples')
         results[key].append([auc_score,precision,recall,average_scores])
-pickle.dump(results,open('graph_feature_only.p','wb'))         
+pickle.dump(results,open(file_dir+'graph_feature_only.p','wb'))         
     
-
-    
+#siganl_only_result = pickle.load(open(file_dir+'signal_feature_only.p','rb'))
+#graph_only_result = pickle.load(open(file_dir+'graph_feature_only.p','rb'))
