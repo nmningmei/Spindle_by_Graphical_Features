@@ -70,7 +70,7 @@ for key,dfs in signal_features_dict.items():
     data = dfs.values   
     X, Y = data[:,:-1], data[:,-1]
     tpot = TPOTClassifier(generations=10,population_size=25,
-                          verbosity=2,random_state=12345,num_cv_folds=5,scoring='roc_auc')
+                          verbosity=2,random_state=12345,cv=5,scoring='roc_auc')
     tpot.fit(X,Y)
     tpot.score(X,Y)
     tpot.export('%s_%s_tpot_exported_pipeline.py'%('signal_feature',key))
@@ -78,7 +78,7 @@ for key,dfs in graph_features_dict.items():
     data = dfs.values   
     X, Y = data[:,:-1], data[:,-1]
     tpot = TPOTClassifier(generations=10,population_size=25,
-                          verbosity=2,random_state=12345,num_cv_folds=5,scoring='roc_auc')
+                          verbosity=2,random_state=12345,cv=5,scoring='roc_auc')
     tpot.fit(X,Y)
     tpot.score(X,Y)
     tpot.export('%s_%s_tpot_exported_pipeline.py'%('graph_feature',key))
