@@ -49,12 +49,16 @@ for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
         cc_features.columns = ['cc_'+name for name in cc_features]
         pli_features.columns = ['pli_'+name for name in pli_features]
         plv_features.columns = ['plv_'+name for name in plv_features]
-        df_combine = pd.concat([cc_features.iloc[:,:-1],pli_features.iloc[:,:-1],plv_features.iloc[:,:-1]],axis=1)
+        cc_features = cc_features.drop('cc_label',1)
+        pli_features = pli_features.drop('pli_label',1)
+        plv_features = plv_features.drop('plv_label',1)
+        df_combine = pd.concat([cc_features,pli_features,plv_features],axis=1)
         df_combine['label']=label
         df_signal.append(signal_features)
         df_graph.append(df_combine)
     signal_features_dict[directory_1] = pd.concat(df_signal)
     graph_features_dict[directory_1]  = pd.concat(df_graph)
+
 results = {}
 for key,dfs in signal_features_dict.items():
     data = dfs.values   
@@ -81,6 +85,7 @@ pickle.dump(results,open(file_dir+'signal_feature_only.p','wb'))
 results = {}
 for key,dfs in graph_features_dict.items():
     data = dfs.values   
+    #dfs.to_csv(file_dir+'%s.csv'%key)
     X, Y = data[:,:-1], data[:,-1]
     cv = StratifiedKFold(n_splits=20,shuffle=True,random_state=np.random.randint(10000,20000))
     results[key] = []

@@ -12,7 +12,7 @@ from sklearn.model_selection import StratifiedKFold,KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.metrics import roc_curve,precision_recall_curve,auc,average_precision_score
+from sklearn.metrics import roc_curve,precision_recall_curve,auc,average_precision_score,confusion_matrix
 import pickle
 from collections import Counter
 
@@ -63,6 +63,7 @@ for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
             print(sub_fold,Counter(label),'enough samples??')
             print('signal:%.2f +/-%.2f'%(np.mean([v for (v,_,_,_) in signal_features_dict[directory_1][sub_fold]]),np.std([v for (v,_,_,_) in signal_features_dict[directory_1][sub_fold]])))
             print('graph:%.2f +/-%.2f'%(np.mean([v for (v,_,_,_) in graph_features_dict[directory_1][sub_fold]]),np.std([v for (v,_,_,_) in graph_features_dict[directory_1][sub_fold]])))
+            #print(confusion_matrix())
         except:
             try:
                 cv = KFold(n_splits=5,shuffle=True,random_state=0)
