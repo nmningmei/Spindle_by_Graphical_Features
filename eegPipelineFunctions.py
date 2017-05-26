@@ -295,8 +295,8 @@ def cross_validation_with_clfs(dfs,clf_ = None, cv=None,kernel='rbf'):
                                                       class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
     elif clf_ == 'svm':
         clf=Pipeline([('scaler',StandardScaler()),
-                        ('estimator',SVC(C=1.0,
-                                      max_iter=int(1e5),kernel=kernel,
+                        ('estimator',SVC(C=1.0,kernel=kernel,
+                                      max_iter=int(1e5),
                                       tol=1e-4,
                                       class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
                                       probability=True,random_state=12345))])
@@ -340,6 +340,6 @@ def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,
             ax.set(ylabel='True positives (blue)/Precision (red)')
         if (ii==6) or (ii==7):
             ax.set(xlabel='False positives (blue)/Recall (red)')
-        print(ii)
+        print('\n\n'+keys+'\n\n')
     fig.suptitle(subtitle)
     return fig

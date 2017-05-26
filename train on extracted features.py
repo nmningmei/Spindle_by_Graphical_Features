@@ -73,16 +73,23 @@ keys=['epoch_length 1.5', 'epoch_length 2.0',
       'epoch_length 2.5', 'epoch_length 3.0', 
       'epoch_length 3.5', 'epoch_length 4.0', 
       'epoch_length 4.5', 'epoch_length 5.0']
-"""
+
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,subtitle='Signal features only, logistic regression')
 fig.tight_layout(pad=3.5)
-fig.savefig(file_dir+'results\\signal_feature_sum_results.png')
+fig.savefig(file_dir+'results\\signal_feature_regression_results.png')
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,subtitle='Graph features only, logistic regression')
 fig.tight_layout(pad=3.5)
-fig.savefig(file_dir+'results\\graph_feature_sum_results.png')
-"""
+fig.savefig(file_dir+'results\\graph_feature_regression_results.png')
+
 ####### svm models  rbf kernel ################
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='rbf',
                                                         subtitle='Signal features only, SVM, kernal: rbf')
+fig.tight_layout(pad=3.5)
+fig.savefig(file_dir+'results\\signal_feature_svm_results.png')
+fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='poly',
+                                                        subtitle='Signal features only, SVM, kernal: poly')
+fig.tight_layout(pad=3.5)
+fig.savefig(file_dir+'results\\signal_feature_svm_results.png')
+
 
