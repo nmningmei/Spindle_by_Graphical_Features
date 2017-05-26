@@ -55,7 +55,10 @@ for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
         cc_features.columns = ['cc_'+name for name in cc_features]
         pli_features.columns = ['pli_'+name for name in pli_features]
         plv_features.columns = ['plv_'+name for name in plv_features]
-        df_combine = pd.concat([cc_features.iloc[:,:-1],pli_features.iloc[:,:-1],plv_features.iloc[:,:-1]],axis=1)
+        cc_features = cc_features.drop('cc_label',1)
+        pli_features = pli_features.drop('pli_label',1)
+        plv_features = plv_features.drop('plv_label',1)
+        df_combine = pd.concat([cc_features,pli_features,plv_features],axis=1)
         df_combine['label']=label
         try:
             signal_features_dict[directory_1][sub_fold] = eegPipelineFunctions.cross_validation_pipeline(signal_features)
