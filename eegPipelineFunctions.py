@@ -16,7 +16,7 @@ import networkx as nx
 from sklearn.model_selection import StratifiedKFold,KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import roc_curve,precision_recall_curve,auc,precision_score,recall_score,average_precision_score
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
@@ -289,9 +289,10 @@ def cross_validation_with_clfs(dfs,clf_ = None, cv=None,kernel='rbf'):
     results = []
     if clf_ is None:
         clf=Pipeline([('scaler',StandardScaler()),
-                        ('estimator',LogisticRegression(C=1.0,
+                        ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
                                                       max_iter=int(1e5),
                                                       tol=1e-4,
+                                                      scoring='roc_auc',solver='sag',cv=10,
                                                       class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
     elif clf_ == 'svm':
         clf=Pipeline([('scaler',StandardScaler()),
@@ -340,6 +341,6 @@ def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,
             ax.set(ylabel='True positives (blue)/Precision (red)')
         if (ii==6) or (ii==7):
             ax.set(xlabel='False positives (blue)/Recall (red)')
-        print('\n\n'+keys+'\n\n')
+        print('\n\n'+key+'\n\n')
     fig.suptitle(subtitle)
     return fig
