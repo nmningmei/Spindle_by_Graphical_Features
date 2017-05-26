@@ -277,6 +277,7 @@ def cross_validation_pipeline(dfs,cv=None):
         results.append([auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores])
     return results
 def cross_validation_with_clfs(dfs,clf_ = None, cv=None,kernel='rbf'):
+    print('cross validation %s'%clf_)
     data = dfs.values   
     X, Y = data[:,:-1], data[:,-1]
     if cv is None:
@@ -299,7 +300,8 @@ def cross_validation_with_clfs(dfs,clf_ = None, cv=None,kernel='rbf'):
                                       tol=1e-4,
                                       class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
                                       probability=True,random_state=12345))])
-    for train, test in cv.split(X,Y):
+    for jj,(train, test) in enumerate(cv.split(X,Y)):
+        print('cv %d'%(jj+1))
         clf = clf
         clf.fit(X[train],Y[train])
         fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
