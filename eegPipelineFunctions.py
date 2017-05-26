@@ -338,5 +338,6 @@ def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,
             ax.set(ylabel='True positives (blue)/Precision (red)')
         if (ii==6) or (ii==7):
             ax.set(xlabel='False positives (blue)/Recall (red)')
+        print(ii)
     fig.suptitle(subtitle)
     return fig

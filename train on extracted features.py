@@ -83,5 +83,6 @@ fig.tight_layout(pad=3.5)
 fig.savefig(file_dir+'results\\graph_feature_sum_results.png')
 """
 ####### svm models  rbf kernel ################
-fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='rbf')
+fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='rbf',
+                                                        subtitle='Signal features only, SVM, kernal: rbf')
 
