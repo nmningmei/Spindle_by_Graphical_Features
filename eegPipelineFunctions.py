@@ -20,6 +20,7 @@ from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics import roc_curve,precision_recall_curve,auc,precision_score,recall_score,average_precision_score
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
 
 def phase_locking_value(theta1, theta2):
     complex_phase_diff = np.exp(np.complex(0,1)*(theta1 - theta2))
@@ -263,10 +264,11 @@ def cross_validation_pipeline(dfs,cv=None):
     results = []
     for train, test in cv.split(X,Y):
         clf = Pipeline([('scaler',StandardScaler()),
-                        ('estimator',LogisticRegression(C=1.0,
-                                                      max_iter=int(1e5),
-                                                      tol=1e-4,
-                                                      class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
+                        ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
+                          max_iter=int(1e4),
+                          tol=1e-4,
+                          scoring='roc_auc',solver='sag',cv=10,
+                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
         clf.fit(X[train],Y[train])
         fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
         auc_score = auc(fpr,tpr)
@@ -276,7 +278,7 @@ def cross_validation_pipeline(dfs,cv=None):
         average_scores = average_precision_score(Y[test],clf.predict(X[test]))
         results.append([auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores])
     return results
-def cross_validation_with_clfs(dfs,clf_ = None, cv=None,kernel='rbf'):
+def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
     print('cross validation %s'%clf_)
     data = dfs.values   
     X, Y = data[:,:-1], data[:,-1]
@@ -286,61 +288,69 @@ def cross_validation_with_clfs(dfs,clf_ = None, cv=None,kernel='rbf'):
         cv = StratifiedKFold(n_splits=int(cv),shuffle=True,random_state=np.random.randint(10000,20000))
     else:
         cv = KFold(n_splits=cv,shuffle=True,random_state=12334)
-    results = []
-    if clf_ is None:
+    auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_=[],[],[],[],[],[],[],[]
+    if clf_ is 'logistic':
         clf=Pipeline([('scaler',StandardScaler()),
                         ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
-                                                      max_iter=int(1e5),
-                                                      tol=1e-4,
-                                                      scoring='roc_auc',solver='sag',cv=10,
-                                                      class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
+                          max_iter=int(1e4),
+                          tol=1e-4,
+                          scoring='roc_auc',solver='sag',cv=5,
+                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
     elif clf_ == 'svm':
         clf=Pipeline([('scaler',StandardScaler()),
                         ('estimator',SVC(C=1.0,kernel=kernel,
-                                      max_iter=int(1e5),
-                                      tol=1e-4,
-                                      class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
-                                      probability=True,random_state=12345))])
+                          max_iter=int(1e4),
+                          tol=1e-4,
+                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
+                          probability=True,random_state=12345))])
+    elif clf_ == 'RF':
+        clf=Pipeline([('scaler',StandardScaler()),
+                      ('estimator',RandomForestClassifier(n_estimators=50,
+                                                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},))])
+    else:
+        clf = clf_
     for jj,(train, test) in enumerate(cv.split(X,Y)):
         print('cv %d'%(jj+1))
         clf = clf
         clf.fit(X[train],Y[train])
         fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
         auc_score = auc(fpr,tpr)
-        precision,recall,_ = precision_recall_curve(Y[test],clf.decision_function(X[test]))
-        #print(Y[test],clf.predict(X[test]))
-        precision_scores = precision_score(Y[test],clf.predict(X[test]), average='micro')
-        recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='micro')
-        average_scores = average_precision_score(Y[test],clf.predict(X[test]))
-        results.append([auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores])
-    return results
+        try:
+            precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
+            #print(Y[test],clf.predict(X[test]))
+            precision_scores = precision_score(Y[test],clf.predict(X[test]), average='micro')
+            recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='micro')
+            average_scores = average_precision_score(Y[test],clf.predict(X[test]))
+        except:
+            precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test]))
+            #print(Y[test],clf.predict(X[test]))
+            precision_scores = precision_score(Y[test],clf.predict(X[test]), average='micro')
+            recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='micro')
+            average_scores = average_precision_score(Y[test],clf.predict(X[test])[:,-1])
+        auc_score_.append(auc_score)
+        fpr_.append(fpr)
+        tpr_.append(tpr)
+        precision_.append(precision)
+        recall_.append(recall)
+        precision_scores_.append(precision_scores)
+        recall_scores_.append(recall_scores)
+        average_scores_.append(average_scores)
+    return auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_
 def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,kernel='rbf'):
     fig,axes = plt.subplots(nrows=3,ncols=3,figsize=(15,15))
     for ii,(key, dfs, ax) in enumerate(zip(keys,feture_dictionary.values(),axes.flatten())):
         results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel)
-        auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores = [],[],[],[],[],[],[],[]
-        for r in results:
-            auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_ = r
-            auc_score.append(auc_score_)
-            fpr.append(fpr_)
-            tpr.append(tpr_)
-            precision.append(precision_)
-            recall.append(recall_)
-            precision_scores.append(precision_scores_)
-            recall_scores.append(recall_scores_)
-            average_scores.append(average_scores_)
+        auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores = results
         best_idx = np.argmax(auc_score)
         ax.plot(fpr[best_idx],tpr[best_idx],color='blue',label='roc auc: %.2f'%np.mean(auc_score),)
         ax.plot(recall[best_idx],precision[best_idx],color='red',
                 label='precision: %.2f,\nrecall: %.2f\nscore: %.2f'%(np.mean(precision_scores),
                                                                      np.mean(recall_scores),np.mean(average_scores)))
         ax.plot([0, 1], [0, 1], color='navy',  linestyle='--')
-        ax.set(xlim=(0,1),ylim=(0,1),title=key)
+        ax.set(xlim=(0,1),ylim=(0,1),title=key,ylabel='True positives (blue)/Precision (red)',
+               xlabel='False positives (blue)/Recall (red)')
         ax.legend(loc='upper left')
-        if (ii==0) or (ii==3) or (ii==6):
-            ax.set(ylabel='True positives (blue)/Precision (red)')
-        if (ii==6) or (ii==7):
-            ax.set(xlabel='False positives (blue)/Recall (red)')
+        
         print('\n\n'+key+'\n\n')
     fig.suptitle(subtitle)
     return fig

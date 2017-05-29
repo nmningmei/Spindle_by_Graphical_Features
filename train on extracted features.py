@@ -88,9 +88,33 @@ fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,key
                                                         subtitle='Signal features only, SVM, kernal: rbf')
 fig.tight_layout(pad=3.5)
 fig.savefig(file_dir+'results\\signal_feature_svm_results.png')
+
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='poly',
                                                         subtitle='Signal features only, SVM, kernal: poly')
 fig.tight_layout(pad=3.5)
-fig.savefig(file_dir+'results\\signal_feature_svm_results.png')
+fig.savefig(file_dir+'results\\graph_feature_svm_results.png')
 
+####### svm models graph feature ##########
 
+plt.close('all')
+fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='svm',kernel='rbf',
+                                                        subtitle='Signal features only, SVM, kernal: rbf')
+fig.tight_layout(pad=3.5)
+fig.savefig(file_dir+'results\\graph_feature_svm_rbf_results.png')
+
+fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='svm',kernel='poly',
+                                                        subtitle='graph features only, SVM, kernal: poly')
+fig.tight_layout(pad=3.5)
+fig.savefig(file_dir+'results\\graph_feature_svm_poly_results.png')
+
+#### random forest #######
+plt.close('all')
+fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='RF',
+                                                        subtitle='Signal features only, RF, n_estimator:50')
+fig.tight_layout(pad=3.5)
+fig.savefig(file_dir+'results\\signal_feature_RF_results.png')
+
+fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='RF',
+                                                        subtitle='graph features only, RF, n_estimator:50')
+fig.tight_layout(pad=3.5)
+fig.savefig(file_dir+'results\\graph_feature_RF_results.png')
