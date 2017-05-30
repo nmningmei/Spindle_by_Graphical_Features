@@ -4,7 +4,6 @@ Created on Tue May 16 12:22:46 2017
 
 @author: ning
 """
-
 import mne
 import pandas as pd
 import numpy as np
@@ -17,10 +16,11 @@ from sklearn.model_selection import StratifiedKFold,KFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegressionCV
-from sklearn.metrics import roc_curve,precision_recall_curve,auc,precision_score,recall_score,average_precision_score
+from sklearn.metrics import roc_curve,precision_recall_curve,auc,precision_score,recall_score,average_precision_score,classification_report,matthews_corrcoef
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+from time import sleep
 
 def phase_locking_value(theta1, theta2):
     complex_phase_diff = np.exp(np.complex(0,1)*(theta1 - theta2))
@@ -288,7 +288,7 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
         cv = StratifiedKFold(n_splits=int(cv),shuffle=True,random_state=np.random.randint(10000,20000))
     else:
         cv = KFold(n_splits=cv,shuffle=True,random_state=12334)
-    auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_=[],[],[],[],[],[],[],[]
+    auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_=[],[],[],[],[],[],[],[],[]
     if clf_ is 'logistic':
         clf=Pipeline([('scaler',StandardScaler()),
                         ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
@@ -318,15 +318,20 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
         try:
             precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
             #print(Y[test],clf.predict(X[test]))
-            precision_scores = precision_score(Y[test],clf.predict(X[test]), average='micro')
-            recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='micro')
+            precision_scores = precision_score(Y[test],clf.predict(X[test]), average='binary')
+            recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='binary')
             average_scores = average_precision_score(Y[test],clf.predict(X[test]))
+            MCC = matthews_corrcoef(Y[test],clf.predict(X[test]))
+            print(classification_report(Y[test],clf.predict(X[test])))
         except:
             precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test]))
             #print(Y[test],clf.predict(X[test]))
-            precision_scores = precision_score(Y[test],clf.predict(X[test]), average='micro')
-            recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='micro')
+            precision_scores = precision_score(Y[test],clf.predict(X[test]), average='binary')
+            recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='binary')
             average_scores = average_precision_score(Y[test],clf.predict(X[test])[:,-1])
+            MCC = matthews_corrcoef(Y[test],clf.predict(X[test]))
+            print(classification_report(Y[test],clf.predict(X[test])))
+        #sleep(1)
         auc_score_.append(auc_score)
         fpr_.append(fpr)
         tpr_.append(tpr)
@@ -335,7 +340,8 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
         precision_scores_.append(precision_scores)
         recall_scores_.append(recall_scores)
         average_scores_.append(average_scores)
-    return auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_
+        MCC_.append(MCC)
+    return auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_
 def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,kernel='rbf'):
     fig,axes = plt.subplots(nrows=3,ncols=3,figsize=(15,15))
     for ii,(key, dfs, ax) in enumerate(zip(keys,feture_dictionary.values(),axes.flatten())):
@@ -354,3 +360,80 @@ def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,
         print('\n\n'+key+'\n\n')
     fig.suptitle(subtitle)
     return fig
+from collections import Counter
+def cross_validation_report(empty_dictionary, sleep_time,clf_='logistic',cv=None,kernel='rbf',file_dir=None,compute='signal'):
+    empty_dictionary={'subject':[],'day':[],'epoch_length':[],
+                      'auc_score_mean':[],'auc_score_std':[],
+                      'fpr':[],'tpr':[],
+                      'precision':[],'recall':[],
+                      'precision_mean':[],'precision_std':[],
+                      'recall_mean':[],'recall_std':[],
+                      'area_under_precision_recall':[],
+                      'matthews_corrcoef_mean':[],
+                      'matthews_corrcoef_std':[]}
+    for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
+        sub_dir = file_dir + directory_1 + '\\'
+        epoch_length = directory_1.split(' ')[1]
+        os.chdir(sub_dir)
+        #signal_features_indivisual_results[directory_1],graph_features_indivisual_results[directory_1]={},{}
+        #df_cc, df_pli, df_plv, df_signal,df_graph = [],[],[],[],[]
+        for sub_fold in os.listdir(sub_dir):
+            
+            sub_fold_dir = sub_dir + sub_fold + '\\'
+            os.chdir(sub_fold_dir)
+            sub = sub_fold[:-4]
+            day = sub_fold[4:][-4:]
+            print(sub,day,epoch_length)
+            cc_features, pli_features, plv_features, signal_features = [pd.read_csv(f) for f in os.listdir(sub_fold_dir) if ('csv' in f)]
+            #df_cc.append(cc_features)
+            #df_pli.append(pli_features)
+            #df_plv.append(plv_features)
+            label = cc_features['label']
+            cc_features = get_real_part(cc_features)
+            pli_features = get_real_part(pli_features)
+            plv_features = get_real_part(plv_features)
+            cc_features.columns = ['cc_'+name for name in cc_features]
+            pli_features.columns = ['pli_'+name for name in pli_features]
+            plv_features.columns = ['plv_'+name for name in plv_features]
+            cc_features = cc_features.drop('cc_label',1)
+            pli_features = pli_features.drop('pli_label',1)
+            plv_features = plv_features.drop('plv_label',1)
+            df_graph = pd.concat([cc_features,pli_features,plv_features],axis=1)
+            df_graph['label']=label
+            df_combine = pd.concat([cc_features, pli_features, plv_features, signal_features],axis=1)
+            df_work = None
+            if compute == 'signal':
+                df_work = signal_features
+            elif compute == 'graph':
+                df_work = df_graph
+            elif compute == 'combine':
+                df_work = df_combine
+            try:
+                result_temp = cross_validation_with_clfs(df_work,clf_=clf_,)
+                auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores,MCC=result_temp
+                empty_dictionary['auc_score_mean'].append(np.nanmean(auc_score))
+                empty_dictionary['auc_score_std'].append(np.std(auc_score))
+                empty_dictionary['fpr'].append(fpr)
+                empty_dictionary['tpr'].append(tpr)
+                empty_dictionary['precision'].append(precision)
+                empty_dictionary['recall'].append(recall)
+                empty_dictionary['precision_mean'].append(np.nanmean(precision_scores))
+                empty_dictionary['precision_std'].append(np.nanstd(precision_scores))
+                empty_dictionary['recall_mean'].append(np.nanmean(recall_scores))
+                empty_dictionary['recall_std'].append(np.nanstd(recall_scores))
+                empty_dictionary['area_under_precision_recall'].append(average_scores)
+                empty_dictionary['matthews_corrcoef_mean'].append(np.nanmean(MCC))
+                empty_dictionary['matthews_corrcoef_std'].append(np.nanstd(MCC))
+                empty_dictionary['subject'].append(sub)
+                empty_dictionary['day'].append(int(day[-1]))
+                empty_dictionary['epoch_length'].append(float(epoch_length))
+                print(sub_fold,Counter(label),'signal:%.2f +/-%.2f'%(np.nanmean(MCC),np.nanstd(MCC)))
+                sleep(sleep_time)
+            except:
+                print('not enough samples')
+    empty_dictionary = pd.DataFrame(empty_dictionary)
+    return empty_dictionary
+        
+                
+                
+                
