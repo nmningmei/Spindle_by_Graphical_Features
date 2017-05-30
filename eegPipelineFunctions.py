@@ -295,18 +295,19 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
                           max_iter=int(1e4),
                           tol=1e-4,
                           scoring='roc_auc',solver='sag',cv=5,
-                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
+                          class_weight={1:5*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
     elif clf_ == 'svm':
         clf=Pipeline([('scaler',StandardScaler()),
                         ('estimator',SVC(C=1.0,kernel=kernel,
                           max_iter=int(1e4),
                           tol=1e-4,
-                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
+                          class_weight={1:15,0:1},
+#                          class_weight={1:5*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
                           probability=True,random_state=12345))])
     elif clf_ == 'RF':
         clf=Pipeline([('scaler',StandardScaler()),
                       ('estimator',RandomForestClassifier(n_estimators=50,
-                                                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},))])
+                                                          class_weight={1:5*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},))])
     else:
         clf = clf_
     for jj,(train, test) in enumerate(cv.split(X,Y)):
