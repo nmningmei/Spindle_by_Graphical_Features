@@ -56,29 +56,75 @@ graph_features_indivisual_results_svm['clf']='Support Vector machine'
 #g = sns.factorplot(x='epoch_length',y='auc_score_mean',hue='day',data=graph_features_indivisual_results,size=figsize)
 #g.set(xlabel='Epoch legnth',ylabel='Mean AUC scores',title='Classification Performance on graph features\nSVM, RBR kernel')
 #g.savefig(file_dir + 'results\\'+ 'svm performance graph feature individual.png')
-signal_features_indivisual_results = pd.concat([signal_features_indivisual_results_RF,signal_features_indivisual_results_svm],axis=0)
-graph_features_indivisual_results = pd.concat([graph_features_indivisual_results_RF,graph_features_indivisual_results_svm],axis=0)
+signal_features_indivisual_results_logistic=pd.read_csv(file_dir+'individual_signal_feature_regression.csv')
+signal_features_indivisual_results_logistic['clf']='Logistic regression'
+graph_features_indivisual_results_logistic=pd.read_csv(file_dir+'individual_graph_feature_regression.csv')
+graph_features_indivisual_results_logistic['clf']='Logistic regression'
+
+signal_features_indivisual_results = pd.concat([signal_features_indivisual_results_RF,
+                                                signal_features_indivisual_results_svm,
+                                                signal_features_indivisual_results_logistic],axis=0)
+graph_features_indivisual_results = pd.concat([graph_features_indivisual_results_RF,
+                                               graph_features_indivisual_results_svm,
+                                               graph_features_indivisual_results_logistic],axis=0)
 signal_features_indivisual_results['auc_score_mean_graph']=graph_features_indivisual_results['auc_score_mean']
 #g = sns.factorplot(x='auc_score_mean',y='auc_score_mean_graph',hue='day',row='clf',
 #                   col='epoch_length',data=signal_features_indivisual_results)
 
-grid= sns.FacetGrid(signal_features_indivisual_results,row='epoch_length',col='clf',hue='day',size=4)
-grid.map(plt.plot, x=[0,1],y=[0,1],color='black',linestyle='--')
-grid.map(plt.plot,"auc_score_mean","auc_score_mean_graph",marker='o',ms=7,linestyle='None')
+grid= sns.FacetGrid(signal_features_indivisual_results,
+                    row='epoch_length',col='clf',
+                    hue='day',size=2,aspect=2)
+#xx = np.mean(signal_features_indivisual_results['auc_score_mean'])
+#yy = np.mean(signal_features_indivisual_results['auc_score_mean_graph'])
+#xx_se = np.mean(signal_features_indivisual_results['auc_score_mean'])/ np.sqrt(len(signal_features_indivisual_results))
+#yy_se = np.mean(signal_features_indivisual_results['auc_score_mean_graph'])/ np.sqrt(len(signal_features_indivisual_results))
+grid.map(plt.hlines,y=0.5,xmin=0,xmax=0.5,color='black',linestyle='--',alpha=0.3)
+grid.map(plt.vlines,x=0.5,ymin=0,ymax=0.5,color='black',linestyle='--',alpha=0.3)
+#grid.map(plt.errorbar,x=xx,y=yy,xerr=xx_se,yerr=yy_se,color='black',ls='None',alpha=1.0)
+grid.map(plt.plot,"auc_score_mean","auc_score_mean_graph",marker='o',ms=7,ls='None',alpha=0.7)
+T = len(grid.axes.flatten())
 for ii,ax in enumerate(grid.axes.flatten()):
     ax.plot([0,1],[0,1],color='navy',linestyle='--')
-    ax.legend(loc='upper left',shadow=False,title='Experiment day')
-    if (ii == 14) or (ii == 15):
-        ax.set(xlabel='AUC of signal features')
-    elif ii % 2 == 0:
+    #ax.legend(loc='upper left',shadow=False,title='Experiment day')
+    ax.set(xlim=(0,1),ylim=(0,1))
+    if (ii == T) or (ii == T-1) or (ii == T-2):
+        ax.set(xlabel='AUC of signal features',xticks=[0,0.2,0.4,0.6,0.8,1.0],
+               xticklabels=[0,0.2,0.4,0.6,0.8,1.0])
+    elif ii % 3 == 0:
         ax.set(ylabel='AUC of graph features')
+grid.axes[-1][0].set(ylabel='AUC of graph features',xlabel='AUC of signal features')
 grid.savefig(file_dir +'results\\individual performance comparison.png')
 
+def average(x):
+    x = x[1:-1].split(', ')
+    x = np.array(x,dtype=float)
+    return np.nanmean(x)
+a = signal_features_indivisual_results['area_under_precision_recall'].apply(average)
+b = graph_features_indivisual_results['area_under_precision_recall'].apply(average)
+signal_features_indivisual_results['signal precision-recall score']=a
+signal_features_indivisual_results['graph precision-recall score']=b
+grid= sns.FacetGrid(signal_features_indivisual_results,
+                    row='epoch_length',col='clf',
+                    hue='day',size=2,aspect=2)
+grid.map(plt.hlines,y=0.5,xmin=0,xmax=0.5,color='black',linestyle='--',alpha=0.3)
+grid.map(plt.vlines,x=0.5,ymin=0,ymax=0.5,color='black',linestyle='--',alpha=0.3)
+grid.map(plt.plot,"signal precision-recall score","graph precision-recall score",marker='o',ms=7,ls='None',
+         alpha=0.7)
+T = len(grid.axes.flatten())
+for ii,ax in enumerate(grid.axes.flatten()):
+    ax.plot([0,1],[0,1],color='navy',linestyle='--')
+    ax.set(xlim=(0,1),ylim=(0,1))
+    if (ii == T) or (ii == T-1) or (ii == T-2):
+        ax.set(xlabel='precision-recall score of signal features')
+    elif ii % 3 == 0:
+        ax.set(ylabel='precision-recall \nscore of graph features')
+grid.axes[-1][0].set(ylabel='precision-recall \nscore of graph features',
+         xlabel='precision-recall score of signal features')
+grid.savefig(file_dir +'results\\individual performance comparison precisio-recall.png')
 
 
-
-
-
+signal_features_indivisual_results_TPOT = pd.read_csv(file_dir+'individual_signal_feature_TPOT.csv')
+graph_features_indivisual_results_TPOT = pd.read_csv(file_dir+'individual_graph_feature_TPOT.csv')
 
 
 
