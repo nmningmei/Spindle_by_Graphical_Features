@@ -191,8 +191,8 @@ for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
             print(sub_fold,Counter(label),'not enough samples')
 signal_features_indivisual_results = pd.DataFrame(signal_features_indivisual_results)
 graph_features_indivisual_results = pd.DataFrame(graph_features_indivisual_results)            
-signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_RF.csv')
-graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_RF.csv')   
+signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_RF.csv',index=False)
+graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_RF.csv',index=False)   
 #pickle.dump(signal_features_indivisual_results,open(file_dir+'individual_signal_feature_RF.p','wb'))
 #pickle.dump(graph_features_indivisual_results,open(file_dir+'individual_graph_feature_RF.p','wb'))
         
@@ -279,8 +279,8 @@ for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
             print(sub_fold,Counter(label),'not enough samples')
 signal_features_indivisual_results = pd.DataFrame(signal_features_indivisual_results)
 graph_features_indivisual_results = pd.DataFrame(graph_features_indivisual_results)
-signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_svm.csv')
-graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_svm.csv')          
+signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_svm.csv',index=False)
+graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_svm.csv',index=False)          
         
 from sklearn.pipeline import make_pipeline, make_union
 from sklearn.decomposition import PCA
