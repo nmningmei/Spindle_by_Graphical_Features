@@ -23,6 +23,7 @@ try:
 except:
     file_dir = 'C:\\Users\\ning\\Downloads\\road_trip\\'
     os.chdir(file_dir)
+################################### Random forest #################################    
 signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}
 signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0,
                                                                                   clf_='RF',file_dir=file_dir,compute='signal')
@@ -33,7 +34,7 @@ combine_features_indivisual_results = eegPipelineFunctions.cross_validation_repo
 signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_RF.csv',index=False)
 graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_RF.csv',index=False)  
 combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_RF.csv',index=False)
-
+################################### support vector machine ###########################
 signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}
 signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0,
                                                                                   clf_='svm',file_dir=file_dir,compute='signal')
@@ -44,7 +45,7 @@ combine_features_indivisual_results = eegPipelineFunctions.cross_validation_repo
 signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_svm.csv',index=False)
 graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_svm.csv',index=False)  
 combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_svm.csv',index=False)
-
+################################## logistic regression ##################################################
 signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}
 signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0,
                                                                                   clf_='logistic',file_dir=file_dir,compute='signal')
@@ -56,7 +57,7 @@ signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_lo
 graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_logistic.csv',index=False)  
 combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_logistic.csv',index=False)
 
-        
+################################ TPOT ############################################      
 from sklearn.pipeline import make_pipeline, make_union
 from sklearn.decomposition import PCA
 from sklearn.neighbors import KNeighborsClassifier
