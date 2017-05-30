@@ -49,7 +49,7 @@ graph_features_indivisual_results_RF['clf']='Random Forest'
 signal_features_indivisual_results_svm=pd.read_csv(file_dir+'individual_signal_feature_svm.csv')
 signal_features_indivisual_results_svm['clf']='Support Vector Machine'
 graph_features_indivisual_results_svm=pd.read_csv(file_dir+'individual_graph_feature_svm.csv') 
-graph_features_indivisual_results_svm['clf']='Support Vector machine'
+graph_features_indivisual_results_svm['clf']='Support Vector Machine'
 #g = sns.factorplot(x='epoch_length',y='auc_score_mean',hue='day',data=signal_features_indivisual_results,size=figsize)
 #g.set(xlabel='Epoch legnth',ylabel='Mean AUC scores',title='Classification Performance on signal features\nSVM, RBF kernel')
 #g.savefig(file_dir + 'results\\'+'svm performance signal feature individual.png')
@@ -67,7 +67,12 @@ signal_features_indivisual_results = pd.concat([signal_features_indivisual_resul
 graph_features_indivisual_results = pd.concat([graph_features_indivisual_results_RF,
                                                graph_features_indivisual_results_svm,
                                                graph_features_indivisual_results_logistic],axis=0)
-signal_features_indivisual_results['auc_score_mean_graph']=graph_features_indivisual_results['auc_score_mean']
+
+signal_features_indivisual_results['data']='signal'
+graph_features_indivisual_results['data']='graph'
+df = pd.concat([signal_features_indivisual_results,graph_features_indivisual_results],axis=0)
+signal_features_indivisual_results = signal_features_indivisual_results.drop('data')
+signal_features_indivisual_results['auc_score_mean_graph']=graph_features_indivisual_results['auc_score_mean'] # need for the first 2 figures
 #g = sns.factorplot(x='auc_score_mean',y='auc_score_mean_graph',hue='day',row='clf',
 #                   col='epoch_length',data=signal_features_indivisual_results)
 
@@ -122,15 +127,17 @@ grid.axes[-1][0].set(ylabel='precision-recall \nscore of graph features',
          xlabel='precision-recall score of signal features')
 grid.savefig(file_dir +'results\\individual performance comparison precisio-recall.png')
 
-
+############# TPOT is doing a bad job #####################################################################
 signal_features_indivisual_results_TPOT = pd.read_csv(file_dir+'individual_signal_feature_TPOT.csv')
 graph_features_indivisual_results_TPOT = pd.read_csv(file_dir+'individual_graph_feature_TPOT.csv')
+sns.factorplot(x='epoch_length',y='auc_score_mean',hue='day',data=signal_features_indivisual_results_TPOT)
+sns.factorplot(x='epoch_length',y='auc_score_mean',hue='day',data=graph_features_indivisual_results_TPOT)
+##############################################################################################################
 
+g=sns.factorplot(x='epoch_length',y='auc_score_mean',hue='day',row='data',col='clf',data=df)
+g.savefig(file_dir+'results\\factor plot of auc.png')
 
-
-
-
-
+g=sns.factorplot(x='epoch_length',y='area_under_precision_recall',hue='day',row='data',col='clf',data=df)
 
 
 

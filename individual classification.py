@@ -416,5 +416,5 @@ for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
             print(sub_fold,Counter(label),'not enough samples')
 signal_features_indivisual_results = pd.DataFrame(signal_features_indivisual_results)
 graph_features_indivisual_results = pd.DataFrame(graph_features_indivisual_results)        
-signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_TPOT.csv')
-graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_TPOT.csv')         
+signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_TPOT.csv',index=False)
+graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_TPOT.csv',index=False)         
