@@ -62,11 +62,11 @@ graph_features_indivisual_results_logistic=pd.read_csv(file_dir+'individual_grap
 graph_features_indivisual_results_logistic['clf']='Logistic regression'
 
 signal_features_indivisual_results = pd.concat([signal_features_indivisual_results_RF,
-                                                signal_features_indivisual_results_svm,
-                                                signal_features_indivisual_results_logistic],axis=0)
+                                                signal_features_indivisual_results_svm],axis=0)
+#                                                signal_features_indivisual_results_logistic],axis=0)
 graph_features_indivisual_results = pd.concat([graph_features_indivisual_results_RF,
-                                               graph_features_indivisual_results_svm,
-                                               graph_features_indivisual_results_logistic],axis=0)
+                                               graph_features_indivisual_results_svm],axis=0)
+#                                               graph_features_indivisual_results_logistic],axis=0)
 
 signal_features_indivisual_results['data']='signal'
 graph_features_indivisual_results['data']='graph'
@@ -137,7 +137,11 @@ sns.factorplot(x='epoch_length',y='auc_score_mean',hue='day',data=graph_features
 g=sns.factorplot(x='epoch_length',y='auc_score_mean',hue='day',row='data',col='clf',data=df)
 g.savefig(file_dir+'results\\factor plot of auc.png')
 
-g=sns.factorplot(x='epoch_length',y='area_under_precision_recall',hue='day',row='data',col='clf',data=df)
+a = df['area_under_precision_recall'].apply(average)
+df['precision-recall score']=a
+g=sns.factorplot(x='epoch_length',y='precision-recall score',hue='day',row='data',col='clf',data=df)
+g.map(plt.hlines,y=0.5,xmin=0,xmax=5,linestyle='--',color='black',alpha=0.7,label='Chance level')
+g.savefig(file_dir+'results\\factor plot of precison-recall score.png')
 
 
 
