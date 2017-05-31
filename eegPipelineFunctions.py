@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from scipy import stats, signal
 from scipy.spatial.distance import squareform, pdist
-from scipy.sparse.csgraph import connected_components,laplacian
+from scipy.sparse.csgraph import laplacian
 import os
 import networkx as nx
 from sklearn.model_selection import StratifiedKFold,KFold
@@ -166,11 +166,11 @@ def extractGraphFeatures(adjacency):
                         Path_length.append(nx.dijkstra_path_length(G,j,k))
             average_path_length=np.mean(Path_length)
             
-            connect_component_ratio = None
-            number_connect_components = None
-            average_component_size = None
-            isolated_point = None
-            end_point = None
+#            connect_component_ratio = None
+#            number_connect_components = None
+#            average_component_size = None
+#            isolated_point = None
+#            end_point = None
             central_point = (np.array([v for v in eccentricity.values()]) == radius).astype(int)
             central_point = central_point.sum() / central_point.shape[0]
             
@@ -278,7 +278,7 @@ def cross_validation_pipeline(dfs,cv=None):
         average_scores = average_precision_score(Y[test],clf.predict(X[test]))
         results.append([auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores])
     return results
-def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
+def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weights=5):
     print('cross validation %s'%clf_)
     data = dfs.values   
     X, Y = data[:,:-1], data[:,-1]
@@ -294,20 +294,20 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
                         ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
                           max_iter=int(1e4),
                           tol=1e-4,
-                          scoring='roc_auc',solver='sag',cv=5,class_weight={1:15,0:1}))])
-#                          class_weight={1:7*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
+                          scoring='roc_auc',solver='sag',cv=5,#class_weight={1:10,0:1}))])
+                          class_weight={1:weights*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
     elif clf_ == 'svm':
         clf=Pipeline([('scaler',StandardScaler()),
                         ('estimator',SVC(C=1.0,kernel=kernel,
                           max_iter=int(1e4),
                           tol=1e-4,
-                          class_weight={1:15,0:1},
-#                          class_weight={1:5*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
+#                          class_weight={1:10,0:1},
+                          class_weight={1:weights*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
                           probability=True,random_state=12345))])
     elif clf_ == 'RF':
         clf=Pipeline([('scaler',StandardScaler()),
                       ('estimator',RandomForestClassifier(n_estimators=50,
-                                                          class_weight={1:5*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},))])
+                                                          class_weight={1:weights*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},))])
     else:
         clf = clf_
     for jj,(train, test) in enumerate(cv.split(X,Y)):
@@ -343,20 +343,20 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
         average_scores_.append(average_scores)
         MCC_.append(MCC)
     return auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_
-def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,kernel='rbf'):
+def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5):
     fig,axes = plt.subplots(nrows=3,ncols=3,figsize=(15,15))
     for ii,(key, dfs, ax) in enumerate(zip(keys,feture_dictionary.values(),axes.flatten())):
-        results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel)
-        auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores = results
+        results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights)
+        auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores, MCC = results
         best_idx = np.argmax(auc_score)
-        ax.plot(fpr[best_idx],tpr[best_idx],color='blue',label='roc auc: %.2f'%np.mean(auc_score),)
+        ax.plot(fpr[best_idx],tpr[best_idx],color='blue',label='roc auc: %.2f\n MCC: %.2f'%(np.mean(auc_score),np.mean(MCC)))
         ax.plot(recall[best_idx],precision[best_idx],color='red',
                 label='precision: %.2f,\nrecall: %.2f\nscore: %.2f'%(np.mean(precision_scores),
                                                                      np.mean(recall_scores),np.mean(average_scores)))
         ax.plot([0, 1], [0, 1], color='navy',  linestyle='--')
         ax.set(xlim=(0,1),ylim=(0,1),title=key,ylabel='True positives (blue)/Precision (red)',
                xlabel='False positives (blue)/Recall (red)')
-        ax.legend(loc='upper left')
+        ax.legend(loc='best')
         
         print('\n\n'+key+'\n\n')
     fig.suptitle(subtitle)
