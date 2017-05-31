@@ -45,7 +45,7 @@ def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoc
     a = np.arange(0,raw.times[-1],epoch_length - epoch_length*overalapping)
     events = np.array([a,[epoch_length]*len(a),[int(1)]*len(a)],dtype=int).T
     epochs = mne.Epochs(raw,events,tmin=0,tmax=epoch_length,baseline=None,preload=True,proj=False)
-    epochs.resample(500)
+    epochs.resample(100)
     
     annotation = pd.read_csv(annotation_file)
     spindles = annotation[annotation['Annotation'].apply(spindle_check)]

@@ -109,6 +109,6 @@ fig.tight_layout(pad=3.5)
 fig.savefig(file_dir+'results\\signal_feature_RF_results.png')
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='RF',
-                                                        subtitle='graph features only, RF, n_estimator:50')
+                                                        subtitle='graph features only, RF, n_estimator:50',weights=8)
 fig.tight_layout(pad=3.5)
 fig.savefig(file_dir+'results\\graph_feature_RF_results.png')
