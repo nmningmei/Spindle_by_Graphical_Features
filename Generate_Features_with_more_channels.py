@@ -9,7 +9,10 @@ import numpy as np
 import pandas as pd
 import os
 os.chdir('D:\\NING - spindle\\Spindle_by_Graphical_Features')
-channelList = ['F3','F4','C3','C4','O1','O2','AF7','AF3','F5','F1','AF4','F2','FC4','F6','C2','CP4','C6','C1','CP3','C5','FC3','PO3','PO7','PO4','PO8','AFz','Fz','Cz','CPz','Pz','POz','Oz']
+channelList = ['F3','F4','C3','C4','O1','O2','F5',
+               'F1','F2','FC4','F6','C2','CP4','C6','C1',
+               'CP3','C5','FC3','PO3','PO7','PO4','PO8','AFz',
+               'Fz','Cz','CPz','Pz','POz','Oz']
 import eegPipelineFunctions
 
 raw_dir = 'D:\\NING - spindle\\training set\\'
