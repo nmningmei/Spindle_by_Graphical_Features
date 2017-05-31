@@ -8,13 +8,7 @@ Created on Sun May 21 13:13:26 2017
 import pandas as pd
 import os
 import numpy as np
-from sklearn.model_selection import StratifiedKFold,KFold
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegressionCV,LogisticRegression
-from sklearn.metrics import roc_curve,precision_recall_curve,auc,average_precision_score,confusion_matrix,classification_report
 import matplotlib.pyplot as plt
-from sklearn.svm import SVC
 import pickle
 try:
     function_dir = 'D:\\NING - spindle\\Spindle_by_Graphical_Features'
