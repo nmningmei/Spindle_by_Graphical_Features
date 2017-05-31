@@ -294,8 +294,8 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf'):
                         ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
                           max_iter=int(1e4),
                           tol=1e-4,
-                          scoring='roc_auc',solver='sag',cv=5,
-                          class_weight={1:5*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
+                          scoring='roc_auc',solver='sag',cv=5,class_weight={1:15,0:1}))])
+#                          class_weight={1:7*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
     elif clf_ == 'svm':
         clf=Pipeline([('scaler',StandardScaler()),
                         ('estimator',SVC(C=1.0,kernel=kernel,
