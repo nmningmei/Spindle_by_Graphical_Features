@@ -73,6 +73,7 @@ graph_features_indivisual_results['data']='graph'
 df = pd.concat([signal_features_indivisual_results,graph_features_indivisual_results],axis=0)
 signal_features_indivisual_results = signal_features_indivisual_results.drop('data')
 signal_features_indivisual_results['auc_score_mean_graph']=graph_features_indivisual_results['auc_score_mean'] # need for the first 2 figures
+signal_features_indivisual_results['matthews_corrcoef_mean_graph']=graph_features_indivisual_results['matthews_corrcoef_mean']
 #g = sns.factorplot(x='auc_score_mean',y='auc_score_mean_graph',hue='day',row='clf',
 #                   col='epoch_length',data=signal_features_indivisual_results)
 
@@ -99,6 +100,30 @@ for ii,ax in enumerate(grid.axes.flatten()):
         ax.set(ylabel='AUC of graph features')
 grid.axes[-1][0].set(ylabel='AUC of graph features',xlabel='AUC of signal features')
 grid.savefig(file_dir +'results\\individual performance comparison.png')
+
+
+
+grid= sns.FacetGrid(signal_features_indivisual_results,
+                    row='epoch_length',col='clf',
+                    hue='day',size=2,aspect=2)
+grid.map(plt.hlines,y=0,xmin=-1,xmax=0,color='black',linestyle='--',alpha=0.3)
+grid.map(plt.vlines,x=0,ymin=-1,ymax=0,color='black',linestyle='--',alpha=0.3)
+#grid.map(plt.errorbar,x=xx,y=yy,xerr=xx_se,yerr=yy_se,color='black',ls='None',alpha=1.0)
+grid.map(plt.plot,"matthews_corrcoef_mean","matthews_corrcoef_mean_graph",marker='o',ms=7,ls='None',alpha=0.7)
+T = len(grid.axes.flatten())
+for ii,ax in enumerate(grid.axes.flatten()):
+    ax.plot([-1,1],[-1,1],color='navy',linestyle='--')
+    #ax.legend(loc='upper left',shadow=False,title='Experiment day')
+    ax.set(xlim=(-1,1),ylim=(-1,1))
+    if (ii == T) or (ii == T-1) or (ii == T-2):
+        ax.set(xlabel='MCC of signal features',xticks=[0,0.2,0.4,0.6,0.8,1.0],
+               xticklabels=[0,0.2,0.4,0.6,0.8,1.0])
+    elif ii % 2 == 0:
+        ax.set(ylabel='MCC of graph features')
+grid.axes[-1][0].set(ylabel='MCC of graph features',xlabel='MCC of signal features')
+grid.savefig(file_dir +'results\\individual performance comparison (MCC).png')
+
+
 
 def average(x):
     x = x[1:-1].split(', ')
