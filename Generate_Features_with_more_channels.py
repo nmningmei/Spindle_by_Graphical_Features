@@ -9,10 +9,11 @@ import numpy as np
 import pandas as pd
 import os
 os.chdir('D:\\NING - spindle\\Spindle_by_Graphical_Features')
-channelList = ['F3','F4','C3','C4','O1','O2','F5',
-               'F1','F2','FC4','F6','C2','CP4','C6','C1',
-               'CP3','C5','FC3','PO3','PO7','PO4','PO8','AFz',
-               'Fz','Cz','CPz','Pz','POz','Oz']
+#channelList = ['F3','F4','C3','C4','O1','O2','F5',
+#               'F1','F2','FC4','F6','C2','CP4','C6','C1',
+#               'CP3','C5','FC3','PO3','PO7','PO4','PO8','AFz',
+#               'Fz','Cz','CPz','Pz','POz','Oz']
+channelList = None
 import eegPipelineFunctions
 
 raw_dir = 'D:\\NING - spindle\\training set\\'
@@ -31,7 +32,7 @@ for file in [f for f in os.listdir(raw_dir) if ('txt' in f)]:
         raw_files.append([raw_dir + raw_file[0],raw_dir + file])
         
 # directory for storing all the feature files
-raw_dir = 'D:\\NING - spindle\\training set\\road_trip_more_channels\\'
+raw_dir = 'D:\\NING - spindle\\training set\\road_trip_all_channels\\'
 if not os.path.exists(raw_dir):
     os.makedirs(raw_dir)
 # initialize the range of the parameters we want to compute based on

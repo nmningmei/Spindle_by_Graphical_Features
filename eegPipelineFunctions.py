@@ -40,7 +40,10 @@ def spindle_check(x):
 def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoch_length=5,overalapping=0.2,
                    ):
     raw = mne.io.read_raw_fif(filename,preload=True)
-    raw.pick_channels(channelList)
+    if channelList is not None:
+        raw.pick_channels(channelList)
+    else:
+        raw.drop_channels(['LOc','ROc'])
     raw.filter(l_freq,h_freq)
     a = np.arange(0,raw.times[-1],epoch_length - epoch_length*overalapping)
     events = np.array([a,[epoch_length]*len(a),[int(1)]*len(a)],dtype=int).T
