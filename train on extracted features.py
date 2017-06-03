@@ -18,10 +18,12 @@ except:
     os.chdir(function_dir)
 import eegPipelineFunctions
 try:
-    file_dir = 'D:\\NING - spindle\\training set\\road_trip\\'
+#    file_dir = 'D:\\NING - spindle\\training set\\road_trip\\'
+    file_dir = 'D:\\NING - spindle\\training set\\road_trip_more_channels\\'
     os.chdir(file_dir)
 except:
-    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip\\'
+#    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip\\'
+    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip_more_channels\\'
     os.chdir(file_dir)
 
 if False:
@@ -66,7 +68,8 @@ plt.close('all')
 keys=['epoch_length 1.5', 'epoch_length 2.0', 
       'epoch_length 2.5', 'epoch_length 3.0', 
       'epoch_length 3.5', 'epoch_length 4.0', 
-      'epoch_length 4.5', 'epoch_length 5.0']
+      'epoch_length 4.5', 'epoch_length 5.0',
+      'epoch_length 5.5']
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,subtitle='Signal features only, logistic regression')
 fig.tight_layout(pad=3.5)
