@@ -18,10 +18,12 @@ except:
     os.chdir(function_dir)
 import eegPipelineFunctions
 try:
-    file_dir = 'D:\\NING - spindle\\training set\\road_trip\\'
+#    file_dir = 'D:\\NING - spindle\\training set\\road_trip\\'
+    file_dir = 'D:\\NING - spindle\\training set\\road_trip_more_channels\\'
     os.chdir(file_dir)
 except:
-    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip\\'
+#    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip\\'
+    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip_more_channels\\'
     os.chdir(file_dir)
 ################################### Random forest #################################    
 signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}

@@ -413,7 +413,7 @@ def cross_validation_report(empty_dictionary, sleep_time,clf_='logistic',cv=None
             elif compute == 'combine':
                 df_work = df_combine
             try:
-                result_temp = cross_validation_with_clfs(df_work,clf_=clf_,)
+                result_temp = cross_validation_with_clfs(df_work,clf_=clf_,cv=5)
                 auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores,MCC=result_temp
                 empty_dictionary['auc_score_mean'].append(np.nanmean(auc_score))
                 empty_dictionary['auc_score_std'].append(np.std(auc_score))
