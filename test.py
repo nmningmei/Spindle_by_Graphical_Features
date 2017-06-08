@@ -19,6 +19,7 @@ import eegPipelineFunctions
 epochs,label,temp = eegPipelineFunctions.get_data_ready(filename,channelList,annotation_file,)
 
 epochFeature = eegPipelineFunctions.featureExtraction(epochs,)
+epochFeature = pd.DataFrame(epochFeature)
 connectivity = eegPipelineFunctions.connectivity(epochs)
 t = 0.8
 connectivity = np.array(connectivity)
@@ -54,3 +55,4 @@ results = cross_val_score(clf,graphFeature.values,label,scoring='roc_auc',cv=cv)
 print(np.mean(results))
 results = cross_val_score(clf,before_feature.values,label,scoring='roc_auc',cv=cv)
 print(np.mean(results))
+
