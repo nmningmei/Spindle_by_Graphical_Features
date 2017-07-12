@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from time import sleep
+from sklearn.metrics import confusion_matrix
 
 def phase_locking_value(theta1, theta2):
     complex_phase_diff = np.exp(np.complex(0,1)*(theta1 - theta2))
@@ -46,12 +47,14 @@ def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoc
         raw.drop_channels(['LOc','ROc'])
     raw.filter(l_freq,h_freq)
     a = np.arange(0,raw.times[-1],epoch_length - epoch_length*overalapping)
-    events = np.array([a,[epoch_length]*len(a),[int(1)]*len(a)],dtype=int).T
+    events = np.array([a*raw.info['sfreq'],[int(epoch_length)]*len(a),[int(1)*raw.info['sfreq']]*len(a)],dtype=int).T
     epochs = mne.Epochs(raw,events,tmin=0,tmax=epoch_length,baseline=None,preload=True,proj=False)
+    print('down sample to 100 Hz ........................')
     epochs.resample(100)
-    
+    print('find target event annotations')
     annotation = pd.read_csv(annotation_file)
     spindles = annotation[annotation['Annotation'].apply(spindle_check)]
+    print('number of spindles marked: %d' %(len(spindles)))
     manual_label,temp = discritized_onset_label_manual(epochs,spindles,epoch_length,front=0,back=0)
     return epochs,manual_label,temp
 
@@ -235,17 +238,18 @@ def spindle_comparison(time_interval,spindle,spindle_duration,spindle_duration_f
         a = np.logical_or((intervalCheck(time_interval,spindle_start)),
                            (intervalCheck(time_interval,spindle_end)))
         return a        
-def discritized_onset_label_manual(epochs,df,spindle_segment,front=300,back=100):
-    start_times = epochs.events[:,0]
-    end_times = epochs.events[:,0] + epochs.events[:,1]
+def discritized_onset_label_manual(epochs,df,spindle_segment_length,front=300,back=100):
+    start_times = epochs.events[:,0]/(np.unique(epochs.events[:,-1])/100)
+    end_times = start_times + epochs.events[:,1] * 100
     discritized_time_intervals = np.vstack((start_times,end_times)).T
+    discritized_time_intervals = discritized_time_intervals / 100
     discritized_time_to_zero_one_labels = np.zeros(len(discritized_time_intervals))
     temp=[]
     for jj,(time_interval_1,time_interval_2) in enumerate(discritized_time_intervals):
         time_interval = [time_interval_1,time_interval_2]
         for spindle in df['Onset']:
             temp.append([time_interval,spindle])
-            if spindle_comparison(time_interval,spindle,spindle_segment):
+            if spindle_comparison(time_interval,spindle,spindle_segment_length):
                 discritized_time_to_zero_one_labels[jj] = 1
     return discritized_time_to_zero_one_labels,temp
 def get_real_part(df):
@@ -257,63 +261,66 @@ def get_real_part(df):
             a = np.array([np.real(np.complex(value)) for value in df[name].values])
             temp[name] = a
     return pd.DataFrame(temp)
-def cross_validation_pipeline(dfs,cv=None):
-    data = dfs.values   
-    X, Y = data[:,:-1], data[:,-1]
-    if cv == None:
-        cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=np.random.randint(10000,20000))
-    else:
-        cv = KFold(n_splits=cv,shuffle=True,random_state=12334)
-    results = []
-    for train, test in cv.split(X,Y):
-        clf = Pipeline([('scaler',StandardScaler()),
-                        ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
-                          max_iter=int(1e4),
-                          tol=1e-4,
-                          scoring='roc_auc',solver='sag',cv=10,
-                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
-        clf.fit(X[train],Y[train])
-        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
-        auc_score = auc(fpr,tpr)
-        precision,recall,_ = precision_recall_curve(Y[test],clf.decision_function(X[test]))
-        precision_scores = precision_score(Y[test],clf.predict(X[test]), average='micro')
-        recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='micro')
-        average_scores = average_precision_score(Y[test],clf.predict(X[test]))
-        results.append([auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores])
-    return results
+#def cross_validation_pipeline(dfs,cv=None):
+#    data = dfs.values   
+#    X, Y = data[:,:-1], data[:,-1]
+#    if cv == None:
+#        cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=np.random.randint(10000,20000))
+#    else:
+#        cv = KFold(n_splits=cv,shuffle=True,random_state=12334)
+#    results = []
+#    for train, test in cv.split(X,Y):
+#        clf = Pipeline([('scaler',StandardScaler()),
+#                        ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
+#                          max_iter=int(1e4),
+#                          tol=1e-4,
+#                          scoring='roc_auc',solver='sag',cv=10,
+#                          class_weight={1:np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
+#        clf.fit(X[train],Y[train])
+#        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
+#        auc_score = auc(fpr,tpr)
+#        precision,recall,_ = precision_recall_curve(Y[test],clf.decision_function(X[test]))
+#        precision_scores = precision_score(Y[test],clf.predict(X[test]), average='micro')
+#        recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='micro')
+#        average_scores = average_precision_score(Y[test],clf.predict(X[test]))
+#        results.append([auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores])
+#    return results
 def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weights=5):
+    from collections import Counter
     print('cross validation %s'%clf_)
     data = dfs.values   
     X, Y = data[:,:-1], data[:,-1]
     if cv is None:
-        cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=np.random.randint(10000,20000))
+        cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=12345)
     elif (type(cv) is int) or (type(cv) is float):
-        cv = StratifiedKFold(n_splits=int(cv),shuffle=True,random_state=np.random.randint(10000,20000))
+        cv = StratifiedKFold(n_splits=int(cv),shuffle=True,random_state=12345)
     else:
         cv = KFold(n_splits=cv,shuffle=True,random_state=12334)
-    auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_=[],[],[],[],[],[],[],[],[]
-    if clf_ is 'logistic':
-        clf=Pipeline([('scaler',StandardScaler()),
-                        ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
-                          max_iter=int(1e4),
-                          tol=1e-4,
-                          scoring='roc_auc',solver='sag',cv=5,#class_weight={1:10,0:1}))])
-                          class_weight={1:weights*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))}))])
-    elif clf_ == 'svm':
-        clf=Pipeline([('scaler',StandardScaler()),
-                        ('estimator',SVC(C=1.0,kernel=kernel,
-                          max_iter=int(1e4),
-                          tol=1e-4,
-#                          class_weight={1:10,0:1},
-                          class_weight={1:weights*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},
-                          probability=True,random_state=12345))])
-    elif clf_ == 'RF':
-        clf=Pipeline([('scaler',StandardScaler()),
-                      ('estimator',RandomForestClassifier(n_estimators=50,
-                                                          class_weight={1:weights*np.count_nonzero(Y)/len(Y),0:1-(np.count_nonzero(Y)/len(Y))},))])
-    else:
-        clf = clf_
+    auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_,confM_=[],[],[],[],[],[],[],[],[],[]
+    
     for jj,(train, test) in enumerate(cv.split(X,Y)):
+        ratio =  list(Counter(Y[train]).values())[1]/(list(Counter(Y[train]).values())[0]+list(Counter(Y[train]).values())[1])
+        if clf_ is 'logistic':
+            clf=Pipeline([('scaler',StandardScaler()),
+                            ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
+                              max_iter=int(1e4),
+                              tol=1e-4,
+                              scoring='roc_auc',solver='sag',cv=5,#class_weight={1:10,0:1}))])
+                              class_weight={1:weights*(1-ratio),0:ratio}))])
+        elif clf_ == 'svm':
+            clf=Pipeline([('scaler',StandardScaler()),
+                            ('estimator',SVC(C=1.0,kernel=kernel,
+                              max_iter=int(1e4),
+                              tol=1e-4,
+                              class_weight={1:weights*(1-ratio),0:ratio},
+                              probability=True,random_state=12345))])
+        elif clf_ == 'RF':
+            clf=Pipeline([('scaler',StandardScaler()),
+                          ('estimator',RandomForestClassifier(n_estimators=50,))])
+#                                                              class_weight={1:weights*(1-ratio),
+#                                                                            0:ratio},))])
+        else:
+            clf = clf_
         print('cv %d'%(jj+1))
         clf = clf
         clf.fit(X[train],Y[train])
@@ -322,19 +329,23 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
         try:
             precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
             #print(Y[test],clf.predict(X[test]))
-            precision_scores = precision_score(Y[test],clf.predict(X[test]), average='binary')
-            recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='binary')
-            average_scores = average_precision_score(Y[test],clf.predict(X[test]))
-            MCC = matthews_corrcoef(Y[test],clf.predict(X[test]))
-            print(classification_report(Y[test],clf.predict(X[test])))
+            precision_scores = precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
+            recall_scores    = recall_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
+            average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+            MCC = matthews_corrcoef(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+            confm = confusion_matrix(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+            confm = confm / confm.sum(axis=1)[:,np.newaxis]
+            print(classification_report(Y[test],clf.predict_proba(X[test])[:,-1]>ratio))
         except:
-            precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test]))
+            precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
             #print(Y[test],clf.predict(X[test]))
-            precision_scores = precision_score(Y[test],clf.predict(X[test]), average='binary')
-            recall_scores    = recall_score(Y[test],clf.predict(X[test]), average='binary')
-            average_scores = average_precision_score(Y[test],clf.predict(X[test])[:,-1])
-            MCC = matthews_corrcoef(Y[test],clf.predict(X[test]))
-            print(classification_report(Y[test],clf.predict(X[test])))
+            precision_scores = precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
+            recall_scores    = recall_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
+            average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+            MCC = matthews_corrcoef(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+            confm = confusion_matrix(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+            confm = confm / confm.sum(axis=1)[:,np.newaxis]
+            print(classification_report(Y[test],clf.predict_proba(X[test])[:,-1]>ratio))
         #sleep(1)
         auc_score_.append(auc_score)
         fpr_.append(fpr)
@@ -345,27 +356,62 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
         recall_scores_.append(recall_scores)
         average_scores_.append(average_scores)
         MCC_.append(MCC)
-    return auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_
-def visualize_auc_precision_recall(feture_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5):
-    fig,axes = plt.subplots(nrows=3,ncols=3,figsize=(15,15))
-    for ii,(key, dfs, ax) in enumerate(zip(keys,feture_dictionary.values(),axes.flatten())):
+        confM_.append(confm)
+    return auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_,confM_
+from scipy import interp
+from scipy import interpolate
+def interpolate_AUC_precision_recall_curves(fpr, tpr,curve_type='auc'):
+    if curve_type == 'auc':
+        base_fpr = np.linspace(0,1,101)
+        tprs = []
+        for fpr_temp, tpr_temp in zip(fpr, tpr):
+            tpr_interp = interp(base_fpr,fpr_temp,tpr_temp)
+            tpr_interp[0] = 0
+            tprs.append(tpr_interp)
+        tprs = np.array(tprs)
+        mean_tprs = tprs.mean(axis=0)
+        std_tprs = tprs.std(axis=0)
+        tprs_upper = np.minimum(mean_tprs + std_tprs, 1)
+        tprs_lower = mean_tprs - std_tprs
+        return base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper
+    elif curve_type == 'p_r':
+        base_fpr = np.linspace(1,0,101)
+        tprs = []
+        for fpr_temp, tpr_temp in zip(fpr, tpr):
+            inter_function = interpolate.interp1d(fpr_temp,tpr_temp)
+            tpr_interp = inter_function(base_fpr)
+            
+            tprs.append(tpr_interp)
+        tprs = np.array(tprs)
+        mean_tprs = tprs.mean(axis=0)
+        std_tprs = tprs.std(axis=0)
+        tprs_upper = np.minimum(mean_tprs + std_tprs, 1)
+        tprs_lower = mean_tprs - std_tprs
+        return base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper
+def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=1):
+    fig,axes = plt.subplots(nrows=4,ncols=5,figsize=(25,20))
+    for ii,(key, dfs, ax) in enumerate(zip(keys,feature_dictionary.values(),axes.flatten())):
         results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights)
-        auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores, MCC = results
-        best_idx = np.argmax(auc_score)
-        ax.plot(fpr[best_idx],tpr[best_idx],color='blue',label='roc auc: %.2f\n MCC: %.2f'%(np.mean(auc_score),np.mean(MCC)))
-        ax.plot(recall[best_idx],precision[best_idx],color='red',
-                label='precision: %.2f,\nrecall: %.2f\nscore: %.2f'%(np.mean(precision_scores),
-                                                                     np.mean(recall_scores),np.mean(average_scores)))
+        auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores, MCC, confM = results
+        base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper = interpolate_AUC_precision_recall_curves(fpr, tpr)
+        ax.plot(base_fpr,mean_tprs,color='blue',label='roc auc: %.2f+/-%.2f\n MCC: %.2f+/-%.2f'%(np.mean(auc_score),np.std(auc_score),
+                                                                                                 np.mean(MCC),np.std(MCC)))
+        ax.fill_between(base_fpr,tprs_lower, tprs_upper, color='blue',alpha=0.3,)
+        base_recall, mean_precision, std_precision, precisions_lower, precisions_upper= interpolate_AUC_precision_recall_curves(recall,precision,'p_r')
+        ax.plot(base_recall,mean_precision,color='red',
+                label='Area under\nprecision-recall curve: %.2f+/-%.2f'%(np.mean(average_scores),
+                                                                     np.std(average_scores)))
+        ax.fill_between(base_recall,precisions_lower,precisions_upper,color='red',alpha=0.3)
         ax.plot([0, 1], [0, 1], color='navy',  linestyle='--')
         ax.set(xlim=(0,1),ylim=(0,1),title=key,ylabel='True positives (blue)/Precision (red)',
                xlabel='False positives (blue)/Recall (red)')
         ax.legend(loc='best')
         
-        print('\n\n'+key+'\n\n')
+        print('\n\n'+key+'\n\n', np.mean(confM,axis=0),'\n\n','MCC: %.2f+/-%.2f'%(np.mean(MCC),np.std(MCC)))
     fig.suptitle(subtitle)
     return fig
 from collections import Counter
-def cross_validation_report(empty_dictionary, sleep_time,clf_='logistic',cv=None,kernel='rbf',file_dir=None,compute='signal'):
+def cross_validation_report(empty_dictionary, pause_time,clf_='logistic',cv=None,kernel='rbf',file_dir=None,compute='signal'):
     empty_dictionary={'subject':[],'day':[],'epoch_length':[],
                       'auc_score_mean':[],'auc_score_std':[],
                       'fpr':[],'tpr':[],
@@ -432,7 +478,7 @@ def cross_validation_report(empty_dictionary, sleep_time,clf_='logistic',cv=None
                 empty_dictionary['day'].append(int(day[-1]))
                 empty_dictionary['epoch_length'].append(float(epoch_length))
                 print(sub_fold,Counter(label),'signal:%.2f +/-%.2f'%(np.nanmean(MCC),np.nanstd(MCC)))
-                sleep(sleep_time)
+                sleep(pause_time)
             except:
                 print('not enough samples')
     empty_dictionary = pd.DataFrame(empty_dictionary)
