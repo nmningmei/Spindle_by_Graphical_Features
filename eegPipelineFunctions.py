@@ -285,6 +285,48 @@ def get_real_part(df):
 #        average_scores = average_precision_score(Y[test],clf.predict(X[test]))
 #        results.append([auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores])
 #    return results
+def RF_cv(clf,X,Y,train,test,ratio):
+    clf.fit(X[train],Y[train])
+    fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
+    auc_score = auc(fpr,tpr)
+    try:
+        precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
+        #print(Y[test],clf.predict(X[test]))
+        precision_scores = precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
+        recall_scores    = recall_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
+        average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+        MCC = matthews_corrcoef(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+        confm = confusion_matrix(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+        confm = confm / confm.sum(axis=1)[:,np.newaxis]
+        print(classification_report(Y[test],clf.predict_proba(X[test])[:,-1]>ratio))
+    except:
+        precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
+        #print(Y[test],clf.predict(X[test]))
+        precision_scores = precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
+        recall_scores    = recall_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
+        average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+        MCC = matthews_corrcoef(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+        confm = confusion_matrix(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+        confm = confm / confm.sum(axis=1)[:,np.newaxis]
+        print(classification_report(Y[test],clf.predict_proba(X[test])[:,-1]>ratio))
+    return fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm
+def SVM_cv(clf,X,Y,train,test):
+    clf.fit(X[train],Y[train])
+    true = Y[test];predict_prob=clf.decision_function(X[test]);
+    fpr,tpr,T = roc_curve(true,predict_prob)
+    ratio = T.mean()
+    predict=np.array(predict_prob>ratio,dtype=int)
+    auc_score = auc(fpr,tpr)
+    precision,recall,_ = precision_recall_curve(true,predict_prob)
+    precision_scores = precision_score(true,predict,average='binary')
+    recall_scores = recall_score(true,predict,average='binary')
+    average_scores = average_precision_score(true,predict)
+    MCC = matthews_corrcoef(true,predict,)
+    confm = confusion_matrix(true,predict)
+    confm = confm / confm.sum(axis=1)[:,np.newaxis]
+    print(classification_report(true,predict))
+    return fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm
+    
 def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weights=5):
     from collections import Counter
     print('cross validation %s'%clf_)
@@ -299,53 +341,31 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
     auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_,confM_=[],[],[],[],[],[],[],[],[],[]
     
     for jj,(train, test) in enumerate(cv.split(X,Y)):
+        print('cv %d'%(jj+1))
         ratio =  list(Counter(Y[train]).values())[1]/(list(Counter(Y[train]).values())[0]+list(Counter(Y[train]).values())[1])
         if clf_ is 'logistic':
             clf=Pipeline([('scaler',StandardScaler()),
-                            ('estimator',LogisticRegressionCV(Cs=np.logspace(-3,3,7),
+                            ('estimator',LogisticRegressionCV(Cs=np.logspace(-4,3,8),n_jobs=2,
                               max_iter=int(1e4),
-                              tol=1e-4,
-                              scoring='roc_auc',solver='sag',cv=5,#class_weight={1:10,0:1}))])
-                              class_weight={1:weights*(1-ratio),0:ratio}))])
+#                              tol=1e-4,
+                              scoring='roc_auc',solver='sag',cv=5,random_state=12345,#class_weight={1:10,0:1}))])
+                              class_weight={1:weights/(1-ratio)}))])
+            fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=SVM_cv(clf,X,Y,train,test)
         elif clf_ == 'svm':
             clf=Pipeline([('scaler',StandardScaler()),
                             ('estimator',SVC(C=1.0,kernel=kernel,
-                              max_iter=int(1e4),
-                              tol=1e-4,
-                              class_weight={1:weights*(1-ratio),0:ratio},
-                              probability=True,random_state=12345))])
+#                              max_iter=int(1e4),
+#                              tol=1e-4,
+                              class_weight={1:weights/(1-ratio)},
+                              probability=False,random_state=12345))])
+            fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=SVM_cv(clf,X,Y,train,test)
         elif clf_ == 'RF':
             clf=Pipeline([('scaler',StandardScaler()),
-                          ('estimator',RandomForestClassifier(n_estimators=50,))])
-#                                                              class_weight={1:weights*(1-ratio),
-#                                                                            0:ratio},))])
+                          ('estimator',RandomForestClassifier(n_estimators=50,random_state=12345,#))])
+                                                              class_weight={1:weights/(1-ratio)},))])
+            fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=RF_cv(clf,X,Y,train,test,ratio)
         else:
             clf = clf_
-        print('cv %d'%(jj+1))
-        clf = clf
-        clf.fit(X[train],Y[train])
-        fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
-        auc_score = auc(fpr,tpr)
-        try:
-            precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
-            #print(Y[test],clf.predict(X[test]))
-            precision_scores = precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
-            recall_scores    = recall_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
-            average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
-            MCC = matthews_corrcoef(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
-            confm = confusion_matrix(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
-            confm = confm / confm.sum(axis=1)[:,np.newaxis]
-            print(classification_report(Y[test],clf.predict_proba(X[test])[:,-1]>ratio))
-        except:
-            precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
-            #print(Y[test],clf.predict(X[test]))
-            precision_scores = precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
-            recall_scores    = recall_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
-            average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
-            MCC = matthews_corrcoef(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
-            confm = confusion_matrix(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
-            confm = confm / confm.sum(axis=1)[:,np.newaxis]
-            print(classification_report(Y[test],clf.predict_proba(X[test])[:,-1]>ratio))
         #sleep(1)
         auc_score_.append(auc_score)
         fpr_.append(fpr)
@@ -357,6 +377,7 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
         average_scores_.append(average_scores)
         MCC_.append(MCC)
         confM_.append(confm)
+        
     return auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_,confM_
 from scipy import interp
 from scipy import interpolate
@@ -388,7 +409,7 @@ def interpolate_AUC_precision_recall_curves(fpr, tpr,curve_type='auc'):
         tprs_upper = np.minimum(mean_tprs + std_tprs, 1)
         tprs_lower = mean_tprs - std_tprs
         return base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper
-def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=1):
+def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5):
     fig,axes = plt.subplots(nrows=4,ncols=5,figsize=(25,20))
     for ii,(key, dfs, ax) in enumerate(zip(keys,feature_dictionary.values(),axes.flatten())):
         results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights)
@@ -408,6 +429,7 @@ def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None
         ax.legend(loc='best')
         
         print('\n\n'+key+'\n\n', np.mean(confM,axis=0),'\n\n','MCC: %.2f+/-%.2f'%(np.mean(MCC),np.std(MCC)))
+        print('roc auc: %.2f+/-%.2f'%(np.mean(auc_score),np.std(auc_score)))
     fig.suptitle(subtitle)
     return fig
 from collections import Counter
