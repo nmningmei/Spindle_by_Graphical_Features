@@ -26,7 +26,7 @@ except:
 #    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip_more_channels\\'
     os.chdir(file_dir)
 
-if True:
+if False:
     signal_features_dict = {}
     graph_features_dict = {}
     for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
@@ -66,25 +66,24 @@ keys=['epoch_length ' + str(a) for a in np.arange(1.,5.,0.2)]
 ##### logitsic regression models ##########
 plt.close('all')
 
-
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='logistic',subtitle='Signal features only, logistic regression')
-fig.tight_layout(pad=3.5)
+fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\signal_feature_regression_results.png')
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='logistic',subtitle='Graph features only, logistic regression')
-fig.tight_layout(pad=3.5)
+fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\graph_feature_regression_results.png')
 
 ####### svm models  rbf kernel ################
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='rbf',
                                                         subtitle='Signal features only, SVM, kernal: rbf')
-fig.tight_layout(pad=3.5)
+fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\signal_feature_svm_results.png')
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='poly',
                                                         subtitle='Signal features only, SVM, kernal: poly')
-fig.tight_layout(pad=3.5)
+fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\graph_feature_svm_results.png')
 
 ####### svm models graph feature ##########
@@ -92,22 +91,22 @@ fig.savefig(file_dir+'results\\graph_feature_svm_results.png')
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='svm',kernel='rbf',
                                                         subtitle='Signal features only, SVM, kernal: rbf')
-fig.tight_layout(pad=3.5)
+fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\signal_feature_svm_rbf_results.png')
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='svm',kernel='poly',
                                                         subtitle='graph features only, SVM, kernal: poly')
-fig.tight_layout(pad=3.5)
+fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\graph_feature_svm_poly_results.png')
 
 #### random forest #######
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='RF',
                                                         subtitle='Signal features only, RF, n_estimator:50')
-fig.tight_layout(pad=3.5)
+fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\signal_feature_RF_results.png')
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='RF',
-                                                        subtitle='graph features only, RF, n_estimator:50',weights=8)
-fig.tight_layout(pad=3.5)
+                                                        subtitle='graph features only, RF, n_estimator:50')#,weights=8)
+fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\graph_feature_RF_results.png')
