@@ -39,11 +39,11 @@ combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_
 ################################### support vector machine ###########################
 signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}
 signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0,
-                                                                                  clf_='svm',file_dir=file_dir,compute='signal')
+                                                                                  clf_='svm',file_dir=file_dir,compute='signal',n_estimators=1)
 graph_features_indivisual_results = eegPipelineFunctions.cross_validation_report(graph_features_indivisual_results,0,
-                                                                                 clf_='svm',file_dir=file_dir,compute='graph')
+                                                                                 clf_='svm',file_dir=file_dir,compute='graph',n_estimators=1)
 combine_features_indivisual_results = eegPipelineFunctions.cross_validation_report(combine_features_indivisual_results,0,
-                                                                                   clf_='svm',file_dir=file_dir,compute='combine')
+                                                                                   clf_='svm',file_dir=file_dir,compute='combine',n_estimators=1)
 signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_svm.csv',index=False)
 graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_svm.csv',index=False)  
 combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_svm.csv',index=False)
