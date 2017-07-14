@@ -374,7 +374,7 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
                                                           class_weight={1:weights/(1-ratio)}))])
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=SVM_cv(clf,X,Y,train,test)
         elif clf_ == 'svm':
-            n_estimators=10
+            n_estimators=n_estimators
             clf=Pipeline([('scaler',StandardScaler()),
                             ('estimator',SVC(C=C,kernel=kernel,
 #                              max_iter=int(1e4),
@@ -525,7 +525,7 @@ def cross_validation_report(empty_dictionary, pause_time,clf_='logistic',cv=None
                 empty_dictionary['day'].append(int(day[-1]))
                 empty_dictionary['epoch_length'].append(float(epoch_length))
                 empty_dictionary['confusion_matrix'].append(confM)
-                print(sub_fold,Counter(label),'signal:MCC=%.2f +/-%.2f\nAUC=%.2f+/-%.2f'%(np.nanmean(MCC),np.nanstd(MCC),
+                print(sub_fold,Counter(label),'%s:MCC=%.2f +/-%.2f\nAUC=%.2f+/-%.2f'%(compute, np.nanmean(MCC),np.nanstd(MCC),
                                        np.nanmean(auc_score),np.nanstd(auc_score)))
                 sleep(pause_time)
             except:
