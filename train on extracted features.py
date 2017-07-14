@@ -110,3 +110,40 @@ fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys
                                                         subtitle='graph features only, RF, n_estimator:50')#,weights=8)
 fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\graph_feature_RF_results.png')
+
+#### xgb #######
+plt.close('all')
+fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='xgb',
+                                                        subtitle='Signal features only, xgb, n_estimator:100')
+fig.tight_layout(pad=4.5)
+fig.savefig(file_dir+'results\\signal_feature_xgb_results.png')
+
+fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='xgb',
+                                                        subtitle='graph features only, xgb, n_estimator:100')#,weights=8)
+fig.tight_layout(pad=4.5)
+fig.savefig(file_dir+'results\\graph_feature_xgb_results.png')
+#### knn #######
+plt.close('all')
+fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='knn',
+                                                        subtitle='Signal feature only, KNN, K=15,weights="distance"',n_estimators=15,
+                                                        )
+fig.tight_layout(pad=4.5)
+fig.savefig(file_dir+'results\\signal_feature_knn_results.png')
+fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='knn',
+                                                        subtitle='Graph feature only, KNN, K=15,weights="distance"',n_estimators=15,)
+fig.tight_layout(pad=4.5)
+fig.savefig(file_dir+'results\\graph_feature_knn_results.png')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
