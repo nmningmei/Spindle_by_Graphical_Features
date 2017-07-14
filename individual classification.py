@@ -36,6 +36,17 @@ combine_features_indivisual_results = eegPipelineFunctions.cross_validation_repo
 signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_RF.csv',index=False)
 graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_RF.csv',index=False)  
 combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_RF.csv',index=False)
+################################### xgb #################################    
+signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}
+signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0,
+                                                                                  clf_='xgb',file_dir=file_dir,compute='signal')
+graph_features_indivisual_results = eegPipelineFunctions.cross_validation_report(graph_features_indivisual_results,0,
+                                                                                 clf_='xgb',file_dir=file_dir,compute='graph')
+combine_features_indivisual_results = eegPipelineFunctions.cross_validation_report(combine_features_indivisual_results,0,
+                                                                                   clf_='xgb',file_dir=file_dir,compute='combine')
+signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_xgb.csv',index=False)
+graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_xgb.csv',index=False)  
+combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_xgb.csv',index=False)
 ################################### support vector machine ###########################
 signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}
 signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0,
@@ -58,7 +69,17 @@ combine_features_indivisual_results = eegPipelineFunctions.cross_validation_repo
 signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_logistic.csv',index=False)
 graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_logistic.csv',index=False)  
 combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_logistic.csv',index=False)
-
+################################### knn #################################    
+signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}
+signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0,
+                                                                                  clf_='knn',file_dir=file_dir,compute='signal',n_estimators=15)
+graph_features_indivisual_results = eegPipelineFunctions.cross_validation_report(graph_features_indivisual_results,0,
+                                                                                 clf_='knn',file_dir=file_dir,compute='graph',n_estimators=15)
+combine_features_indivisual_results = eegPipelineFunctions.cross_validation_report(combine_features_indivisual_results,0,
+                                                                                   clf_='knn',file_dir=file_dir,compute='combine',n_estimators=15)
+signal_features_indivisual_results.to_csv(file_dir+'individual_signal_feature_knn.csv',index=False)
+graph_features_indivisual_results.to_csv(file_dir+'individual_graph_feature_knn.csv',index=False)  
+combine_features_indivisual_results.to_csv(file_dir+'individual_combine_feature_knn.csv',index=False)
 ################################ TPOT ############################################      
 #from sklearn.pipeline import make_pipeline, make_union
 #from sklearn.decomposition import PCA
