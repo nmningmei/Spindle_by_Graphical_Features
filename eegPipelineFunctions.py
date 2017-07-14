@@ -22,6 +22,8 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier,BaggingClassifier
 from time import sleep
 from sklearn.metrics import confusion_matrix
+from xgboost import XGBClassifier
+from sklearn.neighbors import KNeighborsClassifier
 
 def phase_locking_value(theta1, theta2):
     complex_phase_diff = np.exp(np.complex(0,1)*(theta1 - theta2))
@@ -326,23 +328,28 @@ def SVM_cv(clf,X,Y,train,test):
     confm = confm / confm.sum(axis=1)[:,np.newaxis]
     print(classification_report(true,predict))
     return fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm
+def xgb_cv(clf,X,Y, train,test,ratio):
+    clf.fit(X[train],Y[train])
+    true = Y[test];predic_prob=clf.predict_proba(X[test])[:,-1]
+    fpr,tpr,T, = roc_curve(true,predic_prob)
+    auc_score = auc(fpr,tpr)
+    predict = predic_prob > ratio
+    precision,recall,_ = precision_recall_curve(true,predic_prob)
+    precision_scores = precision_score(true,predict,average='binary')
+    recall_scores = recall_score(true,predict,average='binary')
+    average_scores = average_precision_score(true,predict)
+    MCC = matthews_corrcoef(true,predict,)
+    confm = confusion_matrix(true,predict)
+    confm = confm / confm.sum(axis=1)[:,np.newaxis]
+    print(classification_report(true,predict))
+    return fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm
 
-#for C in np.arange(1,11,1):
-#    n_estimators=10
-#    clf=Pipeline([('scaler',StandardScaler()),
-#                            ('estimator',SVC(C=C,kernel='rbf',
-##                              max_iter=int(1e4),
-##                              tol=1e-4,
-#                              class_weight={1:weights/(1-ratio)},
-#                              probability=False,random_state=12345))])
-#    clf = BaggingClassifier(clf,max_samples=1.0 / n_estimators,n_estimators=n_estimators)
-#    clf.fit(X[train],Y[train])
-#    true = Y[test];predict_prob=clf.decision_function(X[test]);
-#    fpr,tpr,T = roc_curve(true,predict_prob)
-#    ratio_ = T.mean()
-#    predict=np.array(predict_prob>ratio_,dtype=int)
-#    print('C=%.1f,\n'%C,confusion_matrix(true,predict))
-#    print(matthews_corrcoef(true,predict,))
+#parameters = {'weights':('uniform', 'distance'), 'n_neighbors':np.arange(4,16)}
+#clf=KNeighborsClassifier()
+#from sklearn.model_selection import GridSearchCV
+#clf_op = GridSearchCV(clf,parameters,scoring='roc_auc',cv=5)
+#clf_op.fit(X,Y)
+
     
 def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weights=5,n_estimators=50,C = 1.):
     from collections import Counter
@@ -368,7 +375,7 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
 #                              scoring='roc_auc',solver='sag',cv=5,random_state=12345,#class_weight={1:10,0:1}))])
 #                              class_weight={1:weights/(1-ratio)}))])
             clf=Pipeline([('scaler',StandardScaler()),
-                          ('estimator',LogisticRegression(C=1e2,max_iter=int(1e4),
+                          ('estimator',LogisticRegression(C=C,max_iter=int(1e4),
                                                           tol=1e-3,
                                                           random_state=12345,
                                                           class_weight={1:weights/(1-ratio)}))])
@@ -381,13 +388,21 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
 #                              tol=1e-4,
                               class_weight={1:weights/(1-ratio)},
                               probability=False,random_state=12345))])
-            clf = BaggingClassifier(clf,max_samples=1.0 / n_estimators,n_estimators=n_estimators)
+#            clf = BaggingClassifier(clf,max_samples=1.0 / n_estimators,n_estimators=n_estimators)
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=SVM_cv(clf,X,Y,train,test)
         elif clf_ == 'RF':
             clf=Pipeline([('scaler',StandardScaler()),
                           ('estimator',RandomForestClassifier(n_estimators=n_estimators,random_state=12345,criterion='gini',#))])
                                                               class_weight={1:weights/(1-ratio)},))])
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=RF_cv(clf,X,Y,train,test,ratio)
+        elif clf_ == 'xgb':
+            clf=Pipeline([('scaler',StandardScaler()),
+                          ('estimator',XGBClassifier())])
+            fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=xgb_cv(clf,X,Y,train,test,ratio)
+        elif clf_== 'knn':
+            clf=Pipeline([('scaler',StandardScaler()),
+                          ('estimator',KNeighborsClassifier(n_neighbors=n_estimators,weights='distance'))])
+            fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=xgb_cv(clf,X,Y,train,test,ratio)
         else:
             clf = clf_
         #sleep(1)
@@ -433,10 +448,10 @@ def interpolate_AUC_precision_recall_curves(fpr, tpr,curve_type='auc'):
         tprs_upper = np.minimum(mean_tprs + std_tprs, 1)
         tprs_lower = mean_tprs - std_tprs
         return base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper
-def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5,C =4.):
+def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5,C =4.,n_estimators=50):
     fig,axes = plt.subplots(nrows=4,ncols=5,figsize=(25,20))
     for ii,(key, dfs, ax) in enumerate(zip(keys,feature_dictionary.values(),axes.flatten())):
-        results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights,C=C)
+        results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights,C=C,n_estimators=n_estimators)
         auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores, MCC, confM = results
         base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper = interpolate_AUC_precision_recall_curves(fpr, tpr)
         ax.plot(base_fpr,mean_tprs,color='blue',label='roc auc: %.2f+/-%.2f\n MCC: %.2f+/-%.2f'%(np.mean(auc_score),np.std(auc_score),
@@ -457,7 +472,7 @@ def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None
     fig.suptitle(subtitle)
     return fig
 from collections import Counter
-def cross_validation_report(empty_dictionary, pause_time,clf_='logistic',cv=None,kernel='rbf',file_dir=None,compute='signal'):
+def cross_validation_report(empty_dictionary, pause_time,clf_='logistic',cv=None,kernel='rbf',file_dir=None,compute='signal',n_estimators=5):
     empty_dictionary={'subject':[],'day':[],'epoch_length':[],
                       'auc_score_mean':[],'auc_score_std':[],
                       'fpr':[],'tpr':[],
@@ -506,7 +521,7 @@ def cross_validation_report(empty_dictionary, pause_time,clf_='logistic',cv=None
             elif compute == 'combine':
                 df_work = df_combine
             try:
-                result_temp = cross_validation_with_clfs(df_work,clf_=clf_,cv=5,weights=10,)
+                result_temp = cross_validation_with_clfs(df_work,clf_=clf_,cv=5,weights=10,n_estimators=n_estimators)
                 auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores,MCC,confM=result_temp
                 empty_dictionary['auc_score_mean'].append(np.nanmean(auc_score))
                 empty_dictionary['auc_score_std'].append(np.std(auc_score))
