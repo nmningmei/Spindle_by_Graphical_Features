@@ -19,11 +19,11 @@ except:
 import eegPipelineFunctions
 try:
     file_dir = 'D:\\NING - spindle\\training set\\road_trip\\'
-#    file_dir = 'D:\\NING - spindle\\training set\\road_trip_more_channels\\'
+#    file_dir = 'D:\\NING - spindle\\training set\\road_trip_29_channels\\'
     os.chdir(file_dir)
 except:
     file_dir = 'C:\\Users\\ning\\Downloads\\road_trip\\'
-#    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip_more_channels\\'
+#    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip_29_channels\\'
     os.chdir(file_dir)
 
 if False:
@@ -68,23 +68,23 @@ plt.close('all')
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='logistic',subtitle='Signal features only, logistic regression')
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\signal_feature_regression_results.png')
+fig.savefig(file_dir+'results\\signal_feature_regression_results.png',dpi=500)
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='logistic',subtitle='Graph features only, logistic regression')
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\graph_feature_regression_results.png')
+fig.savefig(file_dir+'results\\graph_feature_regression_results.png',dpi=500)
 
 ####### svm models  rbf kernel ################
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='rbf',
                                                         subtitle='Signal features only, SVM, kernal: rbf')
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\signal_feature_svm_rbf_results.png')
+fig.savefig(file_dir+'results\\signal_feature_svm_rbf_results.png',dpi=500)
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='poly',
                                                         subtitle='Signal features only, SVM, kernal: poly')
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\signal_feature_svm_poly_results.png')
+fig.savefig(file_dir+'results\\signal_feature_svm_poly_results.png',dpi=500)
 
 ####### svm models graph feature ##########
 
@@ -92,47 +92,47 @@ plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='svm',kernel='rbf',
                                                         subtitle='Signal features only, SVM, kernal: rbf')
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\graph_feature_svm_rbf_results.png')
+fig.savefig(file_dir+'results\\graph_feature_svm_rbf_results.png',dpi=500)
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='svm',kernel='poly',
                                                         subtitle='graph features only, SVM, kernal: poly')
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\graph_feature_svm_poly_results.png')
+fig.savefig(file_dir+'results\\graph_feature_svm_poly_results.png',dpi=500)
 
 #### random forest #######
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='RF',
                                                         subtitle='Signal features only, RF, n_estimator:50')
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\signal_feature_RF_results.png')
+fig.savefig(file_dir+'results\\signal_feature_RF_results.png',dpi=500)
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='RF',
                                                         subtitle='graph features only, RF, n_estimator:50')#,weights=8)
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\graph_feature_RF_results.png')
+fig.savefig(file_dir+'results\\graph_feature_RF_results.png',dpi=500)
 
 #### xgb #######
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='xgb',
                                                         subtitle='Signal features only, xgb, n_estimator:100')
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\signal_feature_xgb_results.png')
+fig.savefig(file_dir+'results\\signal_feature_xgb_results.png',dpi=500)
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='xgb',
                                                         subtitle='graph features only, xgb, n_estimator:100')#,weights=8)
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\graph_feature_xgb_results.png')
+fig.savefig(file_dir+'results\\graph_feature_xgb_results.png',dpi=500)
 #### knn #######
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='knn',
                                                         subtitle='Signal feature only, KNN, K=15,weights="distance"',n_estimators=15,
                                                         )
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\signal_feature_knn_results.png')
+fig.savefig(file_dir+'results\\signal_feature_knn_results.png',dpi=500)
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='knn',
                                                         subtitle='Graph feature only, KNN, K=15,weights="distance"',n_estimators=15,)
 fig.tight_layout(pad=4.5)
-fig.savefig(file_dir+'results\\graph_feature_knn_results.png')
+fig.savefig(file_dir+'results\\graph_feature_knn_results.png',dpi=500)
 
 
 
