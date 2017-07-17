@@ -9,6 +9,7 @@ Created on Wed May 17 12:35:28 2017
 import numpy as np
 import pandas as pd
 import os
+from time import time
 #import networkx as nx
 from collections import Counter
 os.chdir('D:\\NING - spindle\\Spindle_by_Graphical_Features')
@@ -70,6 +71,8 @@ for epoch_length in epoch_lengths:
                                                              epoch_length=epoch_length)
         print(Counter(label))
         # extract signal features
+        ssssss = time()
+        print('extracting signal features ......')
         epochFeature = eegPipelineFunctions.featureExtraction(epochs,)
         epochFeature = pd.DataFrame(epochFeature)
         epochFeature['label']=label
@@ -77,18 +80,22 @@ for epoch_length in epoch_lengths:
         # compute adjasency matrices based on epochs
         connectivity = eegPipelineFunctions.connectivity(epochs)
         connectivity = np.array(connectivity)
-        plv, pli, cc = connectivity[:,0,:,:],connectivity[:,1,:,:],connectivity[:,2,:,:]
+        plv, pli, cc = connectivity[0,:,:,:],connectivity[1,:,:,:],connectivity[2,:,:,:]
         # pre-thresholding graph features
+        print('extracting graph features of plv ........')
         plv_pre_threshold = eegPipelineFunctions.extractGraphFeatures(plv)
         plv_pre_threshold['label']=label
+        print('extracting graph features of pli ........')
         pli_pre_threshold = eegPipelineFunctions.extractGraphFeatures(pli)
         pli_pre_threshold['label']=label
+        print('extracting graph features of cc .........')
         cc_pre_threshold  = eegPipelineFunctions.extractGraphFeatures(cc )
         cc_pre_threshold['label']=label
         plv_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'plv_features.csv',index=False)
         pli_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'pli_features.csv',index=False)
         cc_pre_threshold.to_csv('sub'+str(sub)+'day'+day+'cc_features.csv',index=False)
-        print('done plv, pli, and cc')
+        eeeeee = time()
+        print('done signal, plv, pli, and cc, cost time: %d s'%(eeeeee - ssssss))
 #        print('start thresholding')
 #        # extract graph features
 #        for t_plv,t_pli,t_cc in zip(plv_thresholds,pli_thresholds,cc_thresholds):
