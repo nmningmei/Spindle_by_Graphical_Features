@@ -82,6 +82,19 @@ def featureExtraction(epochs):
     complexity = (diff2/diff1) / (diff1/np.sqrt(np.var(data,axis=2).mean(1)))
     epochFeatures['complexity']=complexity
     
+    specEnt = np.zeros((data.shape[0],data.shape[1]))
+    skAmp = np.zeros((data.shape[0],data.shape[1]))
+    ampSpec = abs(np.fft.fft(data,axis=2))
+    skAmp = stats.skew(ampSpec,axis=2)
+    ampSpec = np.divide(ampSpec, np.sum(ampSpec,axis=2).reshape(data.shape[0],data.shape[1],1))    
+    specEnt = - np.sum(ampSpec * np.log2(ampSpec), axis=2)
+#    skAmp[np.isnan(skAmp)] = 0
+    skAmp = np.nanmean(skAmp,axis=1)
+#    specEnt[np.isnan(specEnt)] = 0
+    specEnt = np.nanmean(specEnt,axis=1)
+    epochFeatures['spectral_entropy']=specEnt
+    epochFeatures['skewness_of_amplitude_spectrum']=skAmp
+    
     for ii, epoch_data in enumerate(data):
         epoch_data  = epoch_data.T
         #print('computing features for epoch %d' %(ii+1))
@@ -112,18 +125,18 @@ def featureExtraction(epochs):
 #        complexity = (np.std(tempData)/diff1)/(diff1/np.sqrt(activity))
 #        epochFeatures['complexity'].append(complexity)
         
-        specEnt = np.zeros(epoch_data.shape[1])
-        skAmp = np.zeros(epoch_data.shape[1])
-        for ii in range(len(specEnt)):
-            this_epoch = epoch_data[:,ii]
-            ampSpec = abs(np.fft.fft(this_epoch))
-            skAmp[ii] = stats.skew(ampSpec)
-            ampSpec  /= sum(ampSpec)
-            specEnt[ii] = -sum(ampSpec * np.log2(ampSpec))
-        skAmp[np.isnan(skAmp)] = 0;skAmp = np.mean(skAmp)
-        specEnt[np.isnan(specEnt)] = 0 ; specEnt = np.mean(specEnt)
-        epochFeatures['spectral_entropy'].append(specEnt)
-        epochFeatures['skewness_of_amplitude_spectrum'].append(skAmp)
+#        specEnt = np.zeros(epoch_data.shape[1])
+#        skAmp = np.zeros(epoch_data.shape[1])
+#        for ii in range(len(specEnt)):
+#            this_epoch = epoch_data[:,ii]
+#            ampSpec = abs(np.fft.fft(this_epoch))
+#            skAmp[ii] = stats.skew(ampSpec)
+#            ampSpec  /= sum(ampSpec)
+#            specEnt[ii] = -sum(ampSpec * np.log2(ampSpec))
+#        skAmp[np.isnan(skAmp)] = 0;skAmp = np.mean(skAmp)
+#        specEnt[np.isnan(specEnt)] = 0 ; specEnt = np.mean(specEnt)
+#        epochFeatures['spectral_entropy'].append(specEnt)
+#        epochFeatures['skewness_of_amplitude_spectrum'].append(skAmp)
     return epochFeatures
 
 

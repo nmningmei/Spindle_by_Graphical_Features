@@ -34,7 +34,7 @@ for file in [f for f in os.listdir(raw_dir) if ('txt' in f)]:
         raw_files.append([raw_dir + raw_file[0],raw_dir + file])
         
 # directory for storing all the feature files
-raw_dir = 'D:\\NING - spindle\\training set\\road_trip_29_channels\\'
+raw_dir = 'D:\\NING - spindle\\training set\\road_trip_%d_channels\\' % len(channelList)
 if not os.path.exists(raw_dir):
     os.makedirs(raw_dir)
 # initialize the range of the parameters we want to compute based on
