@@ -19,7 +19,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve,precision_recall_curve,auc,precision_score,recall_score,average_precision_score,classification_report,matthews_corrcoef
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier,BaggingClassifier
+from sklearn.ensemble import RandomForestClassifier#,BaggingClassifier
 from time import sleep
 from sklearn.metrics import confusion_matrix
 from xgboost import XGBClassifier
@@ -40,16 +40,16 @@ def spindle_check(x):
         return True
     else:
         return False
-def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoch_length=5,overalapping=0.2,
+def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoch_length=5,overlapping=0.2,
                    ):
     raw = mne.io.read_raw_fif(filename,preload=True)
     if channelList is not None:
         raw.pick_channels(channelList)
     else:
         raw.drop_channels(['LOc','ROc'])
-    raw.filter(l_freq,h_freq)
-    a = np.arange(0,raw.times[-1],epoch_length - epoch_length*overalapping)
-    events = np.array([a*raw.info['sfreq'],[int(epoch_length)]*len(a),[int(1)*raw.info['sfreq']]*len(a)],dtype=int).T
+    raw.filter(l_freq,h_freq,)#filter_length='10s', l_trans_bandwidth=0.1, h_trans_bandwidth=0.5,n_jobs=4,)
+    a=epoch_length - overlapping * 2
+    events = mne.make_fixed_length_events(raw,id=1,duration=a)
     epochs = mne.Epochs(raw,events,tmin=0,tmax=epoch_length,baseline=None,preload=True,proj=False)
     print('down sample to 100 Hz ........................')
     epochs.resample(100)
@@ -57,7 +57,7 @@ def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoc
     annotation = pd.read_csv(annotation_file)
     spindles = annotation[annotation['Annotation'].apply(spindle_check)]
     print('number of spindles marked: %d' %(len(spindles)))
-    manual_label,temp = discritized_onset_label_manual(epochs,spindles,epoch_length,front=0,back=0)
+    manual_label,temp = discritized_onset_label_manual(epochs,raw,epoch_length, spindles,epoch_length,front=0,back=0)
     return epochs,manual_label,temp
 
 def featureExtraction(epochs):
@@ -66,15 +66,32 @@ def featureExtraction(epochs):
          'activity','mobility','complexity','skewness_of_amplitude_spectrum',
          'spectral_entropy']
     epochFeatures = {name:[] for name in features}
-    for ii, epoch_data in enumerate(epochs):
-        epoch_data  = epoch_data[:,:-1].T
+    data = epochs.get_data()
+    epochFeatures['mean']=np.mean(data,axis=2).mean(1)
+    epochFeatures['variance']=np.var(data,axis=2).mean(1)
+    epochFeatures['activity']=np.var(data,axis=2).mean(1)
+    startRange = data[:,:,:-1];endRange = data[:,:,1:]
+    epochFeatures['delta_mean']=np.mean(endRange - startRange,axis=2).mean(1)
+    epochFeatures['delta_variance']=np.mean(np.var(endRange - startRange, axis=2),axis=1)
+    tempData = endRange - startRange
+    diff1 = np.std(tempData.reshape(data.shape[0],-1),axis=1)
+    epochFeatures['mobility']=diff1 / np.sqrt(np.var(data,axis=2).mean(1))
+    startRange = data[:,:,:-2];endRange = data[:,:,2:]
+    tempData = endRange - startRange
+    diff2 = np.std(tempData.reshape(data.shape[0],-1),axis=1)
+    complexity = (diff2/diff1) / (diff1/np.sqrt(np.var(data,axis=2).mean(1)))
+    epochFeatures['complexity']=complexity
+    
+    for ii, epoch_data in enumerate(data):
+        epoch_data  = epoch_data.T
         #print('computing features for epoch %d' %(ii+1))
-        epochFeatures['mean'].append(np.mean(epoch_data))
-        epochFeatures['variance'].append(np.var(epoch_data))
-        startRange = epoch_data[:-1,:]
-        endRange = epoch_data[1:]
-        epochFeatures['delta_mean'].append(np.mean(endRange - startRange))
-        epochFeatures['delta_variance'].append(np.mean(np.var(endRange - startRange,axis=0)))
+#        epochFeatures['mean'].append(np.mean(epoch_data))
+#        epochFeatures['variance'].append(np.var(epoch_data))
+#        startRange = epoch_data[:-1,:]
+#        endRange = epoch_data[1:]
+#        epochFeatures['delta_mean'].append(np.mean(endRange - startRange))
+#        epochFeatures['delta_variance'].append(np.mean(np.var(endRange - startRange,axis=0)))
+        
         if ii == 0:
             epochFeatures['change_variance'].append(0)
         elif ii == 1:
@@ -82,18 +99,18 @@ def featureExtraction(epochs):
         else:
             epochFeatures['change_variance'].append(np.mean(np.var(epoch_data - epochFeatures['mean'][ii-1] - epochFeatures['mean'][ii-2],axis=0)))
         
-        activity = np.var(epoch_data)
-        epochFeatures['activity'].append(activity)
-        tempData = startRange - endRange
-        diff1 = np.std(tempData)
-        mobility = np.std(tempData)/np.sqrt(activity)
-        epochFeatures['mobility'].append(mobility)
-        
-        startRange = epoch_data[:-2,:]
-        endRange = epoch_data[2:,:]
-        tempData = endRange - startRange
-        complexity = (np.std(tempData)/diff1)/(diff1/np.sqrt(activity))
-        epochFeatures['complexity'].append(complexity)
+#        activity = np.var(epoch_data)
+#        epochFeatures['activity'].append(activity) # same as variance
+#        tempData = startRange - endRange
+#        diff1 = np.std(tempData)
+#        mobility = np.std(tempData)/np.sqrt(activity)
+#        epochFeatures['mobility'].append(mobility)
+#        
+#        startRange = epoch_data[:-2,:]
+#        endRange = epoch_data[2:,:]
+#        tempData = endRange - startRange
+#        complexity = (np.std(tempData)/diff1)/(diff1/np.sqrt(activity))
+#        epochFeatures['complexity'].append(complexity)
         
         specEnt = np.zeros(epoch_data.shape[1])
         skAmp = np.zeros(epoch_data.shape[1])
@@ -108,28 +125,46 @@ def featureExtraction(epochs):
         epochFeatures['spectral_entropy'].append(specEnt)
         epochFeatures['skewness_of_amplitude_spectrum'].append(skAmp)
     return epochFeatures
+
+
 def connectivity(epochs):       
     ch_names = epochs.ch_names
     connectivity=[]
+    data = epochs.get_data()
+    dist_list_plv = np.zeros(shape=(data.shape[0],len(ch_names),len(ch_names)))
+    dist_list_pli = np.zeros(shape=(data.shape[0],len(ch_names),len(ch_names)))
+    for node_1 in range(len(ch_names)):
+        for node_2 in range(len(ch_names)):
+            if node_1 != node_2:
+                data_1 = data[:,node_1,:]
+                data_2 = data[:,node_2,:]
+                PLV=phase_locking_value(np.angle(signal.hilbert(data_1,axis=1)),
+                                                 np.angle(signal.hilbert(data_2,axis=1)))
+                dist_list_plv[:,node_1,node_2] = np.abs(np.mean(PLV,axis=1))
+                PLI=np.angle(signal.hilbert(data_1,axis=1))-np.angle(signal.hilbert(data_2,axis=1))
+                dist_list_pli[:,node_1,node_2] = np.abs(np.mean(PLI,axis=1))
+    temp_cc = []
     for ii, epoch_data in enumerate(epochs):
         epoch_data  = epoch_data[:,:-1].T
         #print('computing connectivity for epoch %d' %(ii+1))
-        dist_list_plv = np.zeros(shape=(len(ch_names),len(ch_names)))
-        dist_list_pli = np.zeros(shape=(len(ch_names),len(ch_names)))
-        for node_1 in range(len(ch_names)):
-            for node_2 in range(len(ch_names)):
-                if node_1 != node_2:
-                    data_1 = epoch_data[node_1,:]
-                    data_2 = epoch_data[node_2,:]
-                    PLV=phase_locking_value(np.angle(signal.hilbert(data_1,axis=0)),
-                                             np.angle(signal.hilbert(data_2,axis=0)))
-                    dist_list_plv[node_1,node_2]=np.abs(np.mean(PLV))
-                    PLI=np.angle(signal.hilbert(data_1,axis=0))-np.angle(signal.hilbert(data_2,axis=0))
-                    dist_list_pli[node_1,node_2]=np.abs(np.mean(np.sign(PLI)))
+#        dist_list_plv = np.zeros(shape=(len(ch_names),len(ch_names)))
+#        dist_list_pli = np.zeros(shape=(len(ch_names),len(ch_names)))
+#        for node_1 in range(len(ch_names)):
+#            for node_2 in range(len(ch_names)):
+#                if node_1 != node_2:
+#                    data_1 = epoch_data[:,node_1]
+#                    data_2 = epoch_data[:,node_2]
+#                    PLV=phase_locking_value(np.angle(signal.hilbert(data_1,axis=0)),
+#                                             np.angle(signal.hilbert(data_2,axis=0)))
+#                    dist_list_plv[node_1,node_2]=np.abs(np.mean(PLV))
+#                    PLI=np.angle(signal.hilbert(data_1,axis=0))-np.angle(signal.hilbert(data_2,axis=0))
+#                    dist_list_pli[node_1,node_2]=np.abs(np.mean(np.sign(PLI)))
         dist_list_cc = squareform(pdist(epoch_data.T,'correlation'))
         dist_list_cc = abs(1 - dist_list_cc)
         np.fill_diagonal(dist_list_cc,0)
-        connectivity.append([dist_list_plv,dist_list_pli,dist_list_cc])
+        temp_cc.append(dist_list_cc)
+    temp_cc = np.array(temp_cc)
+    connectivity = (dist_list_plv,dist_list_pli,temp_cc)
     return connectivity
 def thresholding(threshold, attribute):
     adjacency = []
@@ -240,11 +275,12 @@ def spindle_comparison(time_interval,spindle,spindle_duration,spindle_duration_f
         a = np.logical_or((intervalCheck(time_interval,spindle_start)),
                            (intervalCheck(time_interval,spindle_end)))
         return a        
-def discritized_onset_label_manual(epochs,df,spindle_segment_length,front=300,back=100):
-    start_times = epochs.events[:,0]/(np.unique(epochs.events[:,-1])/100)
-    end_times = start_times + epochs.events[:,1] * 100
+def discritized_onset_label_manual(epochs,raw,epoch_length, df,spindle_segment_length,front=300,back=100):
+    temporal_event = epochs.events[:,0] / raw.info['sfreq']
+    start_times = temporal_event
+    end_times = start_times + epoch_length
     discritized_time_intervals = np.vstack((start_times,end_times)).T
-    discritized_time_intervals = discritized_time_intervals / 100
+#    discritized_time_intervals = discritized_time_intervals / 100
     discritized_time_to_zero_one_labels = np.zeros(len(discritized_time_intervals))
     temp=[]
     for jj,(time_interval_1,time_interval_2) in enumerate(discritized_time_intervals):
