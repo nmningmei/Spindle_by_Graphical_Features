@@ -19,7 +19,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve,precision_recall_curve,auc,precision_score,recall_score,average_precision_score,classification_report,matthews_corrcoef
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
-from sklearn.ensemble import RandomForestClassifier#,BaggingClassifier
+from sklearn.ensemble import RandomForestClassifier,BaggingClassifier
 from time import sleep
 from sklearn.metrics import confusion_matrix
 from xgboost import XGBClassifier
@@ -40,6 +40,40 @@ def spindle_check(x):
         return True
     else:
         return False
+def intervalCheck(a,b,tol=0):#a is an array and b is a point
+    return a[0]-tol <= b <= a[1]+tol
+def spindle_comparison(time_interval,spindle,spindle_duration,spindle_duration_fix=True):
+    if spindle_duration_fix: # a manually marked spindle
+        spindle_start = spindle - 0.5
+        spindle_end   = spindle + 1.5
+#        a =  np.logical_or((intervalCheck(time_interval,spindle_start)),
+#                           (intervalCheck(time_interval,spindle_end)))
+        return is_overlapping(time_interval[0],time_interval[1],spindle_start,spindle_end)
+    else: # an automated marked spindle, which was marked at its peak
+        spindle_start = spindle - spindle_duration/2.
+        spindle_end   = spindle + spindle_duration/2.
+#        a = np.logical_or((intervalCheck(time_interval,spindle_start)),
+#                           (intervalCheck(time_interval,spindle_end)))
+        return is_overlapping(time_interval[0],time_interval[1],spindle_start,spindle_end)        
+
+def is_overlapping(x1,x2,y1,y2):
+    return max(x1,y1) < min(x2,y2)
+def discritized_onset_label_manual(epochs,raw,epoch_length, df,spindle_duration,):
+    temporal_event = epochs.events[:,0] / raw.info['sfreq']
+    start_times = temporal_event
+    end_times = start_times + epoch_length
+    discritized_time_intervals = np.vstack((start_times,end_times)).T
+    discritized_time_to_zero_one_labels = np.zeros(len(discritized_time_intervals))
+    temp=[]
+    for jj,(time_interval_1,time_interval_2) in enumerate(discritized_time_intervals):
+        time_interval = [time_interval_1,time_interval_2]
+        for spindle in df['Onset']:
+            temp.append([time_interval,spindle])
+            #print(time_interval,spindle)
+            if spindle_comparison(time_interval,spindle,spindle_duration):
+                #print('yes');sleep(4)
+                discritized_time_to_zero_one_labels[jj] = 1
+    return discritized_time_to_zero_one_labels,discritized_time_to_zero_one_labels
 def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoch_length=5,overlapping=0.2,
                    ):
     raw = mne.io.read_raw_fif(filename,preload=True)
@@ -51,13 +85,13 @@ def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoc
     a=epoch_length - overlapping * 2
     events = mne.make_fixed_length_events(raw,id=1,duration=a)
     epochs = mne.Epochs(raw,events,tmin=0,tmax=epoch_length,baseline=None,preload=True,proj=False)
-    print('down sample to 100 Hz ........................')
-    epochs.resample(100)
+    print('down sample to 64 Hz ........................')
+    epochs.resample(64)
     print('find target event annotations')
     annotation = pd.read_csv(annotation_file)
     spindles = annotation[annotation['Annotation'].apply(spindle_check)]
     print('number of spindles marked: %d' %(len(spindles)))
-    manual_label,temp = discritized_onset_label_manual(epochs,raw,epoch_length, spindles,epoch_length,front=0,back=0)
+    manual_label,temp = discritized_onset_label_manual(epochs,raw,epoch_length, spindles,spindle_duration=2,)
     return epochs,manual_label,temp
 
 def featureExtraction(epochs):
@@ -273,36 +307,7 @@ def extractGraphFeatures(adjacency):
         
     results = pd.DataFrame(results)
     return results
-def intervalCheck(a,b,tol=0):#a is an array and b is a point
-    return a[0]-tol <= b <= a[1]+tol
-def spindle_comparison(time_interval,spindle,spindle_duration,spindle_duration_fix=True):
-    if spindle_duration_fix:
-        spindle_start = spindle - 0.5
-        spindle_end   = spindle + 1.5
-        a =  np.logical_or((intervalCheck(time_interval,spindle_start)),
-                           (intervalCheck(time_interval,spindle_end)))
-        return a
-    else:
-        spindle_start = spindle - spindle_duration/2.
-        spindle_end   = spindle + spindle_duration/2.
-        a = np.logical_or((intervalCheck(time_interval,spindle_start)),
-                           (intervalCheck(time_interval,spindle_end)))
-        return a        
-def discritized_onset_label_manual(epochs,raw,epoch_length, df,spindle_segment_length,front=300,back=100):
-    temporal_event = epochs.events[:,0] / raw.info['sfreq']
-    start_times = temporal_event
-    end_times = start_times + epoch_length
-    discritized_time_intervals = np.vstack((start_times,end_times)).T
-#    discritized_time_intervals = discritized_time_intervals / 100
-    discritized_time_to_zero_one_labels = np.zeros(len(discritized_time_intervals))
-    temp=[]
-    for jj,(time_interval_1,time_interval_2) in enumerate(discritized_time_intervals):
-        time_interval = [time_interval_1,time_interval_2]
-        for spindle in df['Onset']:
-            temp.append([time_interval,spindle])
-            if spindle_comparison(time_interval,spindle,spindle_segment_length):
-                discritized_time_to_zero_one_labels[jj] = 1
-    return discritized_time_to_zero_one_labels,temp
+
 def get_real_part(df):
     temp = {}
     for name in df.columns:
@@ -340,16 +345,19 @@ def RF_cv(clf,X,Y,train,test,ratio):
     clf.fit(X[train],Y[train])
     fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
     auc_score = auc(fpr,tpr)
+    true = Y[test];predict_proba=clf.predict_proba(X[test])[:,-1]
+#    predict = clf.predict(X[test])
+    predict = np.array(predict_proba > ratio,dtype=int)
     try:
-        precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
+        precision,recall,_ = precision_recall_curve(true,predict_proba)
         #print(Y[test],clf.predict(X[test]))
-        precision_scores = precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
-        recall_scores    = recall_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio, average='binary')
-        average_scores = average_precision_score(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
-        MCC = matthews_corrcoef(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
-        confm = confusion_matrix(Y[test],clf.predict_proba(X[test])[:,-1]>ratio)
+        precision_scores = precision_score(true,predict, average='binary')
+        recall_scores    = recall_score(true,predict, average='binary')
+        average_scores = average_precision_score(true,predict)
+        MCC = matthews_corrcoef(true,predict)
+        confm = confusion_matrix(true,predict)
         confm = confm / confm.sum(axis=1)[:,np.newaxis]
-        print(classification_report(Y[test],clf.predict_proba(X[test])[:,-1]>ratio))
+        print(classification_report(true,predict))
     except:
         precision,recall,_ = precision_recall_curve(Y[test],clf.predict_proba(X[test])[:,-1])
         #print(Y[test],clf.predict(X[test]))
@@ -400,7 +408,7 @@ def xgb_cv(clf,X,Y, train,test,ratio):
 #clf_op.fit(X,Y)
 
     
-def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weights=5,n_estimators=50,C = 1.):
+def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weights=5,n_estimators=50,C = 1.,bag=False):
     from collections import Counter
     print('cross validation %s'%clf_)
     data = dfs.values   
@@ -437,7 +445,8 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
 #                              tol=1e-4,
                               class_weight={1:weights/(1-ratio)},
                               probability=False,random_state=12345))])
-#            clf = BaggingClassifier(clf,max_samples=1.0 / n_estimators,n_estimators=n_estimators)
+            if bag:
+                clf = BaggingClassifier(clf,max_samples=1.0 / n_estimators,n_estimators=n_estimators)
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=SVM_cv(clf,X,Y,train,test)
         elif clf_ == 'RF':
             clf=Pipeline([('scaler',StandardScaler()),
@@ -454,6 +463,10 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=xgb_cv(clf,X,Y,train,test,ratio)
         else:
             clf = clf_
+            try:
+                fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=xgb_cv(clf,X,Y,train,test,ratio)
+            except:
+                fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=SVM_cv(clf,X,Y,train,test)
         #sleep(1)
         auc_score_.append(auc_score)
         fpr_.append(fpr)
@@ -497,10 +510,10 @@ def interpolate_AUC_precision_recall_curves(fpr, tpr,curve_type='auc'):
         tprs_upper = np.minimum(mean_tprs + std_tprs, 1)
         tprs_lower = mean_tprs - std_tprs
         return base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper
-def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5,C =4.,n_estimators=50):
+def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5,C =4.,n_estimators=50,bag=False):
     fig,axes = plt.subplots(nrows=4,ncols=5,figsize=(25,20))
     for ii,(key, dfs, ax) in enumerate(zip(keys,feature_dictionary.values(),axes.flatten())):
-        results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights,C=C,n_estimators=n_estimators)
+        results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights,C=C,n_estimators=n_estimators,bag=bag)
         auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores, MCC, confM = results
         base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper = interpolate_AUC_precision_recall_curves(fpr, tpr)
         ax.plot(base_fpr,mean_tprs,color='blue',label='roc auc: %.2f+/-%.2f\n MCC: %.2f+/-%.2f'%(np.mean(auc_score),np.std(auc_score),
@@ -521,7 +534,7 @@ def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None
     fig.suptitle(subtitle)
     return fig
 from collections import Counter
-def cross_validation_report(empty_dictionary, pause_time,clf_='logistic',cv=None,kernel='rbf',file_dir=None,compute='signal',n_estimators=5):
+def cross_validation_report(empty_dictionary, pause_time,clf_='logistic',cv=None,kernel='rbf',file_dir=None,compute='signal',n_estimators=5,bag=False):
     empty_dictionary={'subject':[],'day':[],'epoch_length':[],
                       'auc_score_mean':[],'auc_score_std':[],
                       'fpr':[],'tpr':[],
@@ -570,7 +583,7 @@ def cross_validation_report(empty_dictionary, pause_time,clf_='logistic',cv=None
             elif compute == 'combine':
                 df_work = df_combine
             try:
-                result_temp = cross_validation_with_clfs(df_work,clf_=clf_,cv=5,weights=10,n_estimators=n_estimators)
+                result_temp = cross_validation_with_clfs(df_work,clf_=clf_,cv=5,weights=10,n_estimators=n_estimators,bag=bag)
                 auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores,MCC,confM=result_temp
                 empty_dictionary['auc_score_mean'].append(np.nanmean(auc_score))
                 empty_dictionary['auc_score_std'].append(np.std(auc_score))
