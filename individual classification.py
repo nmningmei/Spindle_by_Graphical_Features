@@ -9,6 +9,10 @@ import pandas as pd
 import os
 import numpy as np
 from collections import Counter
+from imblearn.combine import SMOTETomek
+from sklearn.ensemble import RandomForestClassifier
+from imblearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 
 try:
     function_dir = 'D:\\NING - spindle\\Spindle_by_Graphical_Features'
@@ -26,9 +30,13 @@ except:
 #    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip_more_channels\\'
     os.chdir(file_dir)
 ################################### Random forest #################################    
+clf = clf = make_pipeline(SMOTETomek(random_state=12345,kind_smote='borderline2'),
+                            StandardScaler(),
+                            RandomForestClassifier(n_estimators=50,random_state=12345,criterion='gini',))
+#                            class_weight={1:1/(1-ratio)}))
 signal_features_indivisual_results,graph_features_indivisual_results,combine_features_indivisual_results={},{},{}
-signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0,
-                                                                                  clf_='RF',file_dir=file_dir,compute='signal')
+signal_features_indivisual_results = eegPipelineFunctions.cross_validation_report(signal_features_indivisual_results,0.5,
+                                                                                  clf_=clf,file_dir=file_dir,compute='signal')
 graph_features_indivisual_results = eegPipelineFunctions.cross_validation_report(graph_features_indivisual_results,0,
                                                                                  clf_='RF',file_dir=file_dir,compute='graph')
 combine_features_indivisual_results = eegPipelineFunctions.cross_validation_report(combine_features_indivisual_results,0,
