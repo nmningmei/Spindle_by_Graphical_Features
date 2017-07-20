@@ -5,12 +5,12 @@ Created on Mon Jul 17 14:17:08 2017
 @author: ning
 """
 
-#import mne
-#import numpy as np
-#import pandas as pd
+import mne
+import numpy as np
+import pandas as pd
 import os
 #import networkx as nx
-#from collections import Counter
+from collections import Counter
 os.chdir('D:\\NING - spindle\\Spindle_by_Graphical_Features')
 channelList = ['F3','F4','C3','C4','O1','O2']
 import eegPipelineFunctions
@@ -30,21 +30,21 @@ for file in [f for f in os.listdir(raw_dir) if ('txt' in f)]:
     if len(raw_file) != 0:
         raw_files.append([raw_dir + raw_file[0],raw_dir + file])
         
-raw_file, annotation_file = raw_files[0]
+raw_file, annotation_file = raw_files[22]
 l_freq = 11;h_freq = 16
-epoch_length = 2; overlapping = 0.2
-#raw = mne.io.read_raw_fif(raw_file,preload=True)
-#if channelList is not None:
-#    raw.pick_channels(channelList)
-#else:
-#    raw.drop_channels(['LOc','ROc'])
-#raw.filter(l_freq,h_freq,filter_length='10s', l_trans_bandwidth=0.1, h_trans_bandwidth=0.5,n_jobs=4,)
-#a=epoch_length - overlapping * 2
-#events = mne.make_fixed_length_events(raw,id=1,duration=a)
-#epochs = mne.Epochs(raw,events,tmin=0,tmax=epoch_length,baseline=None,preload=True,proj=False)
-#epochs.resample(100)
-#annotation = pd.read_csv(annotation_file)
-#spindles = annotation[annotation['Annotation'].apply(eegPipelineFunctions.spindle_check)]
-epochs,label,_ = eegPipelineFunctions.get_data_ready(raw_file,channelList,
+epoch_length = 3; overlapping = 0.2
+raw = mne.io.read_raw_fif(raw_file,preload=True)
+if channelList is not None:
+    raw.pick_channels(channelList)
+else:
+    raw.drop_channels(['LOc','ROc'])
+raw.filter(l_freq,h_freq,filter_length='10s', l_trans_bandwidth=0.1, h_trans_bandwidth=0.5,n_jobs=4,)
+a=epoch_length - overlapping * 2
+events = mne.make_fixed_length_events(raw,id=1,duration=a)
+epochs = mne.Epochs(raw,events,tmin=0,tmax=epoch_length,baseline=None,preload=True,proj=False)
+epochs.resample(64)
+annotation = pd.read_csv(annotation_file)
+spindles = annotation[annotation['Annotation'].apply(eegPipelineFunctions.spindle_check)]
+epochs,label,temp = eegPipelineFunctions.get_data_ready(raw_file,channelList,
                                                              annotation_file,
                                                              epoch_length=epoch_length)
