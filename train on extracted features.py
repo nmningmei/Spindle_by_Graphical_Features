@@ -77,25 +77,24 @@ fig.savefig(file_dir+'results\\graph_feature_regression_results.png',dpi=500)
 ####### svm models  rbf kernel ################
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='rbf',
-                                                        subtitle='Signal features only, SVM, kernal: rbf')
+                                                        subtitle='Signal features only, SVM, kernal: rbf',n_estimators=10,bag=True)
 fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\signal_feature_svm_rbf_results.png',dpi=500)
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(signal_features_dict,keys,clf_='svm',kernel='poly',
-                                                        subtitle='Signal features only, SVM, kernal: poly')
+                                                        subtitle='Signal features only, SVM, kernal: poly',n_estimators=10,bag=True)
 fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\signal_feature_svm_poly_results.png',dpi=500)
 
 ####### svm models graph feature ##########
-
 plt.close('all')
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='svm',kernel='rbf',
-                                                        subtitle='Signal features only, SVM, kernal: rbf')
+                                                        subtitle='Signal features only, SVM, kernal: rbf',n_estimators=10,bag=True)
 fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\graph_feature_svm_rbf_results.png',dpi=500)
 
 fig=eegPipelineFunctions.visualize_auc_precision_recall(graph_features_dict,keys,clf_='svm',kernel='poly',
-                                                        subtitle='graph features only, SVM, kernal: poly')
+                                                        subtitle='graph features only, SVM, kernal: poly',n_estimators=10,bag=True)
 fig.tight_layout(pad=4.5)
 fig.savefig(file_dir+'results\\graph_feature_svm_poly_results.png',dpi=500)
 
