@@ -29,15 +29,24 @@ except:
 if False:
     signal_features_dict = {}
     graph_features_dict = {}
+    my_features_dict = {}
     for directory_1 in [f for f in os.listdir(file_dir) if ('epoch_length' in f)]:
         sub_dir = file_dir + directory_1 + '\\'
         epoch_length = directory_1[-3]
         os.chdir(sub_dir)
-        df_cc, df_pli, df_plv, df_signal,df_graph = [],[],[],[],[]
+        df_cc, df_pli, df_plv, df_signal,df_graph,df_my = [],[],[],[],[],[]
         for sub_fold in os.listdir(sub_dir):
             sub_fold_dir = sub_dir + sub_fold + '\\'
             os.chdir(sub_fold_dir)
-            cc_features, pli_features, plv_features, signal_features = [pd.read_csv(f) for f in os.listdir(sub_fold_dir) if ('csv' in f)]
+            dfs = [f for f in os.listdir(sub_fold_dir) if ('csv' in f)]
+            signal_features = pd.read_csv([f for f in dfs if ('epoch' in f)][0])
+            try:
+                df_my_feature = pd.read_csv([f for f in dfs if ('my' in f)][0])
+            except:
+                pass
+            cc_features = pd.read_csv([f for f in dfs if ('cc' in f)][0])
+            pli_features = pd.read_csv([f for f in dfs if ('pli' in f)][0])
+            plv_features = pd.read_csv([f for f in dfs if ('plv' in f)][0])
             #df_cc.append(cc_features)
             #df_pli.append(pli_features)
             #df_plv.append(plv_features)
@@ -55,13 +64,24 @@ if False:
             df_combine['label']=label
             df_signal.append(signal_features)
             df_graph.append(df_combine)
+            try:
+                df_my.append(df_my_feature)
+            except:
+                pass
         signal_features_dict[directory_1] = pd.concat(df_signal)
         graph_features_dict[directory_1]  = pd.concat(df_graph)
         pickle.dump(signal_features_dict,open(file_dir+'signal_features_data.p','wb'))
         pickle.dump(graph_features_dict, open(file_dir+'graph_features_data.p','wb'))
+        try:
+            my_features_dict[directory_1] = pd.concat(df_my)
+            pickle.dump(my_features_dict,open(file_dir+'my_features_data.p','wb'))
+        except:
+            pass
+        
 else:
     signal_features_dict=pickle.load(open(file_dir+'signal_features_data.p','rb'))
     graph_features_dict= pickle.load(open(file_dir+'graph_features_data.p','rb'))
+    my_features_dict = pickle.load(open(file_dir+'my_features_data.p','rb'))
 keys=['epoch_length ' + str(a) for a in np.arange(1.,5.,0.2)]
 ##### logitsic regression models ##########
 plt.close('all')

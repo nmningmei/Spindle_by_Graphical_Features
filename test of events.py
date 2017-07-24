@@ -45,6 +45,7 @@ epochs = mne.Epochs(raw,events,tmin=0,tmax=epoch_length,baseline=None,preload=Tr
 epochs.resample(64)
 annotation = pd.read_csv(annotation_file)
 spindles = annotation[annotation['Annotation'].apply(eegPipelineFunctions.spindle_check)]
-epochs,label,temp = eegPipelineFunctions.get_data_ready(raw_file,channelList,
-                                                             annotation_file,
-                                                             epoch_length=epoch_length)
+#epochs,label,temp = eegPipelineFunctions.get_data_ready(raw_file,channelList,
+#                                                             annotation_file,
+#                                                             epoch_length=epoch_length)
+

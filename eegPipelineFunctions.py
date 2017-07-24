@@ -24,6 +24,8 @@ from time import sleep
 from sklearn.metrics import confusion_matrix
 from xgboost import XGBClassifier
 from sklearn.neighbors import KNeighborsClassifier
+#from imblearn.over_sampling import SMOTE#,RandomOverSampler
+#from imblearn.under_sampling import RandomUnderSampler
 
 def phase_locking_value(theta1, theta2):
     complex_phase_diff = np.exp(np.complex(0,1)*(theta1 - theta2))
@@ -58,6 +60,14 @@ def spindle_comparison(time_interval,spindle,spindle_duration,spindle_duration_f
 
 def is_overlapping(x1,x2,y1,y2):
     return max(x1,y1) < min(x2,y2)
+
+def window_rms(a, window_size):
+  a2 = np.power(a,2)
+  window = signal.gaussian(window_size,(window_size/.68)/2)
+  return np.sqrt(np.convolve(a2, window, 'same')/len(a2)) * 1e2
+def trimmed_std(a,p):
+    temp = stats.trimboth(a,p/2)
+    return np.std(temp)
 def discritized_onset_label_manual(epochs,raw,epoch_length, df,spindle_duration,):
     temporal_event = epochs.events[:,0] / raw.info['sfreq']
     start_times = temporal_event
@@ -72,8 +82,21 @@ def discritized_onset_label_manual(epochs,raw,epoch_length, df,spindle_duration,
             #print(time_interval,spindle)
             if spindle_comparison(time_interval,spindle,spindle_duration):
                 #print('yes');sleep(4)
+                print(time_interval,spindle-0.5,spindle+1.5)
                 discritized_time_to_zero_one_labels[jj] = 1
     return discritized_time_to_zero_one_labels,discritized_time_to_zero_one_labels
+def discritized_onset_label_auto(epochs,raw,df,epoch_length,front=0,back=0):
+    temporal_event = epochs.events[:,0] / raw.info['sfreq']
+    start_times = temporal_event
+    end_times = start_times + epoch_length
+    discritized_time_intervals = np.vstack((start_times,end_times)).T
+    discritized_time_to_zero_one_labels = np.zeros(len(discritized_time_intervals))
+    for jj,(time_interval_1,time_interval_2) in enumerate(discritized_time_intervals):
+        time_interval = [time_interval_1,time_interval_2]
+        for kk,(spindle,spindle_duration) in enumerate(zip(df['Onset'],df['Duration'])):
+            if spindle_comparison(time_interval,spindle,spindle_duration,spindle_duration_fix=False):
+                discritized_time_to_zero_one_labels[jj] = 1
+    return discritized_time_to_zero_one_labels,discritized_time_intervals
 def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoch_length=5,overlapping=0.2,
                    ):
     raw = mne.io.read_raw_fif(filename,preload=True)
@@ -92,8 +115,29 @@ def get_data_ready(filename,channelList,annotation_file,l_freq=11,h_freq=16,epoc
     spindles = annotation[annotation['Annotation'].apply(spindle_check)]
     print('number of spindles marked: %d' %(len(spindles)))
     manual_label,temp = discritized_onset_label_manual(epochs,raw,epoch_length, spindles,spindle_duration=2,)
-    return epochs,manual_label,temp
-
+    print('extracting customized features ..........')
+    features = extraMyfeatures(epochs,channelList,epoch_length,)
+    return epochs,manual_label,features,temp
+def extraMyfeatures(epochs,channelList,epoch_length,lower_threshold=0.4,higher_threshold=3.4,l_freq=11,h_freq=16):
+    full_prop=[] 
+    data = epochs.get_data()       
+    for d in data:    
+        temp_p=[]
+        #fig,ax = plt.subplots(nrows=2,ncols=3,figsize=(8,8))
+        for ii,(name) in enumerate(zip(channelList)):#,ax.flatten())):
+            rms = window_rms(d[ii,:],epochs.info['sfreq'])
+            l = stats.trim_mean(rms,0.05) + lower_threshold * trimmed_std(rms,0.05)
+            h = stats.trim_mean(rms,0.05) + higher_threshold * trimmed_std(rms,0.05)
+            prop = (sum(rms>l)+sum(rms<h))/(sum(rms<h) - sum(rms<l))
+            if np.isinf(prop):
+                prop = (sum(rms>l)+sum(rms<h))
+            temp_p.append(prop)
+        full_prop.append(temp_p)
+    full_prop = np.array(full_prop)
+    psds,freq = mne.time_frequency.psd_multitaper(epochs,fmin=l_freq,fmax=h_freq,tmin=0,tmax=epoch_length,low_bias=True,n_jobs=3)
+    psds = 10* np.log10(psds)
+    features = np.concatenate((full_prop,psds.max(2),freq[np.argmax(psds,2)]),1)
+    return features
 def featureExtraction(epochs):
     features = ['mean','variance','delta_mean',
           'delta_variance','change_variance',
@@ -346,8 +390,8 @@ def RF_cv(clf,X,Y,train,test,ratio):
     fpr,tpr,_ = roc_curve(Y[test],clf.predict_proba(X[test])[:,-1])
     auc_score = auc(fpr,tpr)
     true = Y[test];predict_proba=clf.predict_proba(X[test])[:,-1]
-#    predict = clf.predict(X[test])
-    predict = np.array(predict_proba > ratio,dtype=int)
+    predict = clf.predict(X[test])
+#    predict = np.array(predict_proba > ratio,dtype=int)
     try:
         precision,recall,_ = precision_recall_curve(true,predict_proba)
         #print(Y[test],clf.predict(X[test]))
@@ -390,7 +434,7 @@ def xgb_cv(clf,X,Y, train,test,ratio):
     true = Y[test];predic_prob=clf.predict_proba(X[test])[:,-1]
     fpr,tpr,T, = roc_curve(true,predic_prob)
     auc_score = auc(fpr,tpr)
-    predict = predic_prob > ratio
+    predict = clf.predict(X[test])
     precision,recall,_ = precision_recall_curve(true,predic_prob)
     precision_scores = precision_score(true,predict,average='binary')
     recall_scores = recall_score(true,predict,average='binary')
@@ -407,20 +451,79 @@ def xgb_cv(clf,X,Y, train,test,ratio):
 #clf_op = GridSearchCV(clf,parameters,scoring='roc_auc',cv=5)
 #clf_op.fit(X,Y)
 
-    
-def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weights=5,n_estimators=50,C = 1.,bag=False):
+from imblearn.pipeline import make_pipeline
+def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weights=5,n_estimators=50,C = 1.,bag=False,resample=False,
+                               resample_clf=None,return_clf=False):
     from collections import Counter
-    print('cross validation %s'%clf_)
     data = dfs.values   
     X, Y = data[:,:-1], data[:,-1]
+    
+    if return_clf:
+        ratio = list(Counter(Y).values())[1]/(list(Counter(Y).values())[0]+list(Counter(Y).values())[1])
+        if clf_ is 'logistic':
+#            clf=Pipeline([('scaler',StandardScaler()),
+#                            ('estimator',LogisticRegressionCV(Cs=np.logspace(-4,3,8),n_jobs=2,
+#                              max_iter=int(1e4),
+#                              tol=1e-4,
+#                              scoring='roc_auc',solver='sag',cv=5,random_state=12345,#class_weight={1:10,0:1}))])
+#                              class_weight={1:weights/(1-ratio)}))])
+            clf=Pipeline([('scaler',StandardScaler()),
+                          ('estimator',LogisticRegression(C=C,max_iter=int(1e4),
+                                                          tol=1e-3,
+                                                          random_state=12345,
+                                                          class_weight='balanced'))])
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
+            
+        elif clf_ == 'svm':
+            n_estimators=n_estimators
+            clf=Pipeline([('scaler',StandardScaler()),
+                            ('estimator',SVC(C=C,kernel=kernel,
+#                              max_iter=int(1e4),
+#                              tol=1e-4,
+                              class_weight='balanced',
+                              probability=False,random_state=12345))])
+            if bag:
+                clf = BaggingClassifier(clf,max_samples=1.0 / n_estimators,n_estimators=n_estimators)
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
+            
+        elif clf_ == 'RF':
+            clf=Pipeline([('scaler',StandardScaler()),
+                          ('estimator',RandomForestClassifier(n_estimators=n_estimators,random_state=12345,criterion='gini',#))])
+                                                              class_weight='balanced',))])#1/(1-ratio)
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
+            
+        elif clf_ == 'xgb':
+            clf=Pipeline([('scaler',StandardScaler()),
+                          ('estimator',XGBClassifier())])
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
+            
+        elif clf_== 'knn':
+            clf=Pipeline([('scaler',StandardScaler()),
+                          ('estimator',KNeighborsClassifier(n_neighbors=n_estimators,weights='distance'))])
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
+            
+        else:
+            clf = clf_
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
+        clf.fit(X,Y);print('trained')
+        return clf
+    auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_,confM_=[],[],[],[],[],[],[],[],[],[]
+    
+    print('cross validation %s'%clf_)
+    
     if cv is None:
         cv = StratifiedKFold(n_splits=10,shuffle=True,random_state=12345)
     elif (type(cv) is int) or (type(cv) is float):
         cv = StratifiedKFold(n_splits=int(cv),shuffle=True,random_state=12345)
     else:
         cv = KFold(n_splits=cv,shuffle=True,random_state=12334)
-    auc_score_,fpr_,tpr_,precision_,recall_,precision_scores_,recall_scores_,average_scores_,MCC_,confM_=[],[],[],[],[],[],[],[],[],[]
-    
+        
     for jj,(train, test) in enumerate(cv.split(X,Y)):
         print('cv %d'%(jj+1))
         ratio =  list(Counter(Y[train]).values())[1]/(list(Counter(Y[train]).values())[0]+list(Counter(Y[train]).values())[1])
@@ -435,7 +538,9 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
                           ('estimator',LogisticRegression(C=C,max_iter=int(1e4),
                                                           tol=1e-3,
                                                           random_state=12345,
-                                                          class_weight={1:weights/(1-ratio)}))])
+                                                          class_weight='balanced'))])
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=SVM_cv(clf,X,Y,train,test)
         elif clf_ == 'svm':
             n_estimators=n_estimators
@@ -443,26 +548,37 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
                             ('estimator',SVC(C=C,kernel=kernel,
 #                              max_iter=int(1e4),
 #                              tol=1e-4,
-                              class_weight={1:weights/(1-ratio)},
+                              class_weight='balanced',
                               probability=False,random_state=12345))])
             if bag:
                 clf = BaggingClassifier(clf,max_samples=1.0 / n_estimators,n_estimators=n_estimators)
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=SVM_cv(clf,X,Y,train,test)
         elif clf_ == 'RF':
             clf=Pipeline([('scaler',StandardScaler()),
                           ('estimator',RandomForestClassifier(n_estimators=n_estimators,random_state=12345,criterion='gini',#))])
-                                                              class_weight={1:weights/(1-ratio)},))])
+                                                              class_weight='balanced',))])#1/(1-ratio)
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=RF_cv(clf,X,Y,train,test,ratio)
         elif clf_ == 'xgb':
+            ratio =  list(Counter(Y[train]).values())[0]/(list(Counter(Y[train]).values())[1])
             clf=Pipeline([('scaler',StandardScaler()),
-                          ('estimator',XGBClassifier())])
+                          ('estimator',XGBClassifier(scale_pos_weight=ratio))])
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=xgb_cv(clf,X,Y,train,test,ratio)
         elif clf_== 'knn':
             clf=Pipeline([('scaler',StandardScaler()),
                           ('estimator',KNeighborsClassifier(n_neighbors=n_estimators,weights='distance'))])
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=xgb_cv(clf,X,Y,train,test,ratio)
         else:
             clf = clf_
+            if resample:
+                clf = make_pipeline(*resample_clf,clf)
             try:
                 fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=xgb_cv(clf,X,Y,train,test,ratio)
             except:
@@ -510,10 +626,11 @@ def interpolate_AUC_precision_recall_curves(fpr, tpr,curve_type='auc'):
         tprs_upper = np.minimum(mean_tprs + std_tprs, 1)
         tprs_lower = mean_tprs - std_tprs
         return base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper
-def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5,C =4.,n_estimators=50,bag=False):
+def visualize_auc_precision_recall(feature_dictionary,keys,subtitle='',clf_=None,kernel='rbf',weights=5,C =4.,n_estimators=50,bag=False,
+                                   resample=False):
     fig,axes = plt.subplots(nrows=4,ncols=5,figsize=(25,20))
     for ii,(key, dfs, ax) in enumerate(zip(keys,feature_dictionary.values(),axes.flatten())):
-        results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights,C=C,n_estimators=n_estimators,bag=bag)
+        results = cross_validation_with_clfs(dfs,clf_=clf_,kernel=kernel,weights=weights,C=C,n_estimators=n_estimators,bag=bag,resample=resample)
         auc_score,fpr,tpr,precision,recall,precision_scores,recall_scores,average_scores, MCC, confM = results
         base_fpr, mean_tprs,std_tprs,tprs_lower,tprs_upper = interpolate_AUC_precision_recall_curves(fpr, tpr)
         ax.plot(base_fpr,mean_tprs,color='blue',label='roc auc: %.2f+/-%.2f\n MCC: %.2f+/-%.2f'%(np.mean(auc_score),np.std(auc_score),

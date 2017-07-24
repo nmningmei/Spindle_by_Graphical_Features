@@ -13,12 +13,15 @@ import numpy as np
 import pickle
 from sklearn.model_selection import KFold
 from collections import Counter
-#from imblearn.over_sampling import SMOTE
-from imblearn.combine import SMOTETomek
+from imblearn.over_sampling import SMOTE,RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.combine import SMOTETomek,SMOTEENN
 from sklearn.ensemble import RandomForestClassifier
 from imblearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn import metrics
+from xgboost import XGBClassifier
+from sklearn.pipeline import Pipeline
 try:
     function_dir = 'D:\\NING - spindle\\Spindle_by_Graphical_Features'
     os.chdir(function_dir)
@@ -44,10 +47,26 @@ for ii,(key, dfs) in enumerate(zip(keys,signal_features_dict.values())):
     for jj,(train, test) in enumerate(cv.split(X,Y)):
         print('%s, cv %d'%(key,jj+1))
         ratio =  list(Counter(Y[train]).values())[1]/(list(Counter(Y[train]).values())[0]+list(Counter(Y[train]).values())[1])
-        clf = make_pipeline(SMOTETomek(random_state=12345,kind_smote='borderline2'),
-                            StandardScaler(),
-                            RandomForestClassifier(n_estimators=50,random_state=12345,criterion='gini',))
+#        clf = make_pipeline(SMOTETomek(random_state=12345,kind_smote='borderline2'),
+#                            StandardScaler(),
+#                            RandomForestClassifier(n_estimators=50,random_state=12345,criterion='gini',
 #                            class_weight={1:1/(1-ratio)}))
+#        clf = make_pipeline(SMOTETomek(random_state=12345,smote=SMOTE(k_neighbors=2,kind='borderline2')),
+#                            StandardScaler(),
+#                            XGBClassifier())
+#        clf = make_pipeline(RandomUnderSampler(),RandomOverSampler(),
+#                            StandardScaler(),
+#                            XGBClassifier())
+        clf=Pipeline([#('scaler',StandardScaler()),
+                          ('estimator',XGBClassifier())])
+        clf = make_pipeline(RandomUnderSampler(),SMOTE(k_neighbors=2,kind='borderline2'),
+                            clf)
+        clf = make_pipeline(RandomUnderSampler(),SMOTE(k_neighbors=2,kind='borderline2'),
+#                            StandardScaler(),
+                            RandomForestClassifier(n_estimators=50,random_state=12345,criterion='gini',
+                            class_weight={1:0.99}))#1000/(1-ratio)
+#        sample_weight= np.array([5 if i == 1 else 1 for i in Y])
+
         clf.fit(X[train],Y[train])
         true = Y[test];predic_prob=clf.predict_proba(X[test])[:,-1]
 #        predict = predic_prob > ratio
@@ -57,7 +76,7 @@ for ii,(key, dfs) in enumerate(zip(keys,signal_features_dict.values())):
         print(auc_score,'\n\n',
               metrics.classification_report(true, predict),'\n\n',
               metrics.matthews_corrcoef(true,predict),'\n\n',
-              metrics.confusion_matrix(true,predict)/ metrics.confusion_matrix(true,predict).sum(axis=1)[:,np.newaxis]) 
+              metrics.confusion_matrix(true,predict)/ metrics.confusion_matrix(true,predict).sum(axis=1)[:,np.newaxis],'\n\n') 
         
 #######################################################################################################################################        
 import pandas as pd

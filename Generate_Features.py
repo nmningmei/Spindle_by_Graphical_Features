@@ -66,17 +66,21 @@ for epoch_length in epoch_lengths:
             os.makedirs(directory_2)
         os.chdir(directory_2)
         # epoch the data 
-        epochs,label,_ = eegPipelineFunctions.get_data_ready(raw_file,channelList,
+        ssssss = time()
+        epochs,label,my_features,_ = eegPipelineFunctions.get_data_ready(raw_file,channelList,
                                                              annotation_file,
                                                              epoch_length=epoch_length)
         print('epoch_length '+str(epoch_length),Counter(label))
         # extract signal features
-        ssssss = time()
+        
         print('extracting signal features ......')
         epochFeature = eegPipelineFunctions.featureExtraction(epochs,)
         epochFeature = pd.DataFrame(epochFeature)
         epochFeature['label']=label
         epochFeature.to_csv('sub'+str(sub)+'day'+day+'_'+str(epoch_length)+'_'+'epoch_features.csv',index=False)
+        my_features = pd.DataFrame(my_features)
+        my_features['label']=label
+        my_features.to_csv('sub'+str(sub)+'day'+day+'_'+str(epoch_length)+'_'+'my_features.csv',index=False)
         # compute adjasency matrices based on epochs
         connectivity = eegPipelineFunctions.connectivity(epochs)
         connectivity = np.array(connectivity)

@@ -71,7 +71,7 @@ for epoch_length in epoch_lengths:
         epochs,label,_ = eegPipelineFunctions.get_data_ready(raw_file,channelList,
                                                              annotation_file,
                                                              epoch_length=epoch_length)
-        print(Counter(label))
+        print('epoch_length '+str(epoch_length),Counter(label))
         # extract signal features
         ssssss = time()
         print('extracting signal features ......')

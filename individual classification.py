@@ -11,6 +11,8 @@ import numpy as np
 from collections import Counter
 from imblearn.combine import SMOTETomek
 from sklearn.ensemble import RandomForestClassifier
+from imblearn.over_sampling import SMOTE#,RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
 from imblearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -30,7 +32,7 @@ except:
 #    file_dir = 'C:\\Users\\ning\\Downloads\\road_trip_more_channels\\'
     os.chdir(file_dir)
 ################################### Random forest #################################    
-clf = clf = make_pipeline(SMOTETomek(random_state=12345,kind_smote='borderline2'),
+clf =  make_pipeline(SMOTETomek(random_state=12345,kind_smote='borderline2'),
                             StandardScaler(),
                             RandomForestClassifier(n_estimators=50,random_state=12345,criterion='gini',))
 #                            class_weight={1:1/(1-ratio)}))
