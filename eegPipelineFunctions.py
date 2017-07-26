@@ -82,7 +82,7 @@ def discritized_onset_label_manual(epochs,raw,epoch_length, df,spindle_duration,
             #print(time_interval,spindle)
             if spindle_comparison(time_interval,spindle,spindle_duration):
                 #print('yes');sleep(4)
-                print(time_interval,spindle-0.5,spindle+1.5)
+                #print(time_interval,spindle-0.5,spindle+1.5)
                 discritized_time_to_zero_one_labels[jj] = 1
     return discritized_time_to_zero_one_labels,discritized_time_to_zero_one_labels
 def discritized_onset_label_auto(epochs,raw,df,epoch_length,front=0,back=0):
@@ -146,7 +146,7 @@ def featureExtraction(epochs):
     epochFeatures = {name:[] for name in features}
     data = epochs.get_data()
     epochFeatures['mean']=np.mean(data,axis=2).mean(1)
-    epochFeatures['variance']=np.var(data,axis=2).mean(1)
+    epochFeatures['variance']=np.var(data.reshape(data.shape[0],-1),axis=1)
     epochFeatures['activity']=np.var(data,axis=2).mean(1)
     startRange = data[:,:,:-1];endRange = data[:,:,1:]
     epochFeatures['delta_mean']=np.mean(endRange - startRange,axis=2).mean(1)
@@ -558,7 +558,7 @@ def cross_validation_with_clfs(dfs,clf_ = 'logistic', cv=None,kernel='rbf',weigh
         elif clf_ == 'RF':
             clf=Pipeline([('scaler',StandardScaler()),
                           ('estimator',RandomForestClassifier(n_estimators=n_estimators,random_state=12345,criterion='gini',#))])
-                                                              class_weight='balanced',))])#1/(1-ratio)
+                                                              class_weight='balanced_subsample',))])#1/(1-ratio)
             if resample:
                 clf = make_pipeline(*resample_clf,clf)
             fpr, tpr, auc_score,precision, recall,average_scores, precision_scores,recall_scores,MCC,confm=RF_cv(clf,X,Y,train,test,ratio)
